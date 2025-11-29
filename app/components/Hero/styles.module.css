@@ -1,0 +1,190 @@
+.hero {
+  padding: 0 65px;
+  display: flex;
+  align-items: center;
+  min-height: 716px;
+}
+
+.heroCard {
+  background-color: var(--color-primary);
+  border-radius: var(--radius-2xl);
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: var(--space-6);
+  padding: var(--space-6) 95px;
+  min-height: 716px;
+}
+
+.heroContent {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+.textContent {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  max-width: 475px;
+}
+
+.heroTitle {
+  font-size: 48px;
+  font-weight: 800;
+  color: var(--white);
+  line-height: 1.1;
+  margin: 0;
+}
+
+.heroDescription {
+  font-size: 20px;
+  font-weight: 400;
+  color: var(--white);
+  line-height: 1.6;
+  margin: 0;
+}
+
+.emailForm {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  width: 100%;
+}
+
+.emailInput,
+.countrySelect {
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  border: none;
+  font-size: 14px;
+  background-color: var(--white);
+  color: var(--black);
+  font-family: var(--font-family-base);
+}
+
+.emailInput::placeholder {
+  color: #d9d9d9;
+}
+
+.countrySelect {
+  width: 100%;
+  max-width: 100%;
+  cursor: pointer;
+}
+
+.countrySelect option {
+  color: var(--black);
+  background-color: var(--white);
+}
+
+.submitButton {
+  padding: var(--space-3) var(--space-5);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--white);
+  background-color: transparent;
+  color: var(--white);
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: 1px;
+  transition: background-color 0.2s ease;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.submitButton:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.message {
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  font-size: 14px;
+  font-weight: 500;
+  margin-top: var(--space-2);
+}
+
+.success {
+  background-color: rgba(34, 197, 94, 0.2);
+  color: #dcfce7;
+  border: 1px solid rgba(34, 197, 94, 0.5);
+}
+
+.error {
+  background-color: rgba(239, 68, 68, 0.2);
+  color: #fee2e2;
+  border: 1px solid rgba(239, 68, 68, 0.5);
+}
+
+.heroImage {
+  width: 446px;
+  height: 443px;
+  flex-shrink: 0;
+}
+
+.heroImage img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+@media (max-width: 1200px) {
+  .hero {
+    padding: 0 var(--space-12);
+  }
+
+  .heroCard {
+    padding: var(--space-6) var(--space-12);
+  }
+
+  .heroImage {
+    width: 350px;
+    height: 350px;
+  }
+}
+
+@media (max-width: 768px) {
+  .hero {
+    padding: 0 var(--space-6);
+    min-height: auto;
+  }
+
+  .heroCard {
+    flex-direction: column;
+    padding: var(--space-8);
+    min-height: auto;
+  }
+
+  .heroContent {
+    width: 100%;
+  }
+
+  .textContent {
+    max-width: 100%;
+  }
+
+  .heroTitle {
+    font-size: 32px;
+  }
+
+  .heroDescription {
+    font-size: 18px;
+  }
+
+  .emailForm {
+    width: 100%;
+  }
+
+  .emailInput,
+  .countrySelect,
+  .submitButton {
+    width: 100%;
+  }
+
+  .heroImage {
+    width: 100%;
+    height: auto;
+    max-width: 350px;
+  }
+}
