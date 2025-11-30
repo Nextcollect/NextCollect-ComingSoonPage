@@ -1,3 +1,6 @@
+ 'use client';
+
+import { useCallback } from 'react';
 import styles from './styles.module.css';
 
 export function AboutSection() {
@@ -56,10 +59,20 @@ export function FeaturesSection() {
 }
 
 export function CTASection() {
+  const handleScrollToHero = useCallback(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    const emailInput = document.getElementById('early-access-email');
+    if (emailInput) {
+      setTimeout(() => emailInput.focus(), 350);
+    }
+  }, []);
+
   return (
     <section className={styles.ctaSection}>
       <div className={styles.ctaContent}>
-        <button className={styles.ctaButton}>Join The Waitlist</button>
+        <button className={styles.ctaButton} onClick={handleScrollToHero}>
+          Join The Waitlist
+        </button>
         <p className={styles.ctaText}>
           Become a part of the first wave that joins the community and became a founder member.
         </p>

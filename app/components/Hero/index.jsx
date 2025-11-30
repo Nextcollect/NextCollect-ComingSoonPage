@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import styles from './styles.module.css';
 import { supabase } from './supabase';
 import { validateEmail } from './validation';
@@ -18,6 +18,20 @@ export default function Hero() {
   const [country, setCountry] = useState('');
   const [message, setMessage] = useState('');
   const [messageType, setMessageType] = useState('');
+  const [isCountryOpen, setIsCountryOpen] = useState(false);
+  const countryDropdownRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (!countryDropdownRef.current) return;
+      if (!countryDropdownRef.current.contains(event.target)) {
+        setIsCountryOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -62,7 +76,7 @@ export default function Hero() {
   };
 
   return (
-    <section className={styles.hero}>
+    <section className={styles.hero} id="hero">
       <div className={styles.heroCard}>
         <div className={styles.heroContent}>
           <div className={styles.textContent}>
@@ -74,25 +88,56 @@ export default function Hero() {
             </p>
           </div>
           <form onSubmit={handleSubmit} className={styles.emailForm}>
-            <input
-              type="email"
-              placeholder="Enter your email address"
-              className={styles.emailInput}
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-            />
-            <select
-              className={styles.countrySelect}
-              value={country}
-              onChange={(e) => setCountry(e.target.value)}
-            >
-              <option value="">Select country</option>
-              {EUROPEAN_COUNTRIES.map((c) => (
-                <option key={c} value={c}>
-                  {c}
-                </option>
-              ))}
-            </select>
+            <div className={styles.formControl}>
+              <label htmlFor="early-access-email" className={styles.formLabel}>
+                Email
+              </label>
+              <input
+                type="email"
+                id="early-access-email"
+                placeholder="Enter your email address"
+                className={styles.emailInput}
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
+            </div>
+            <div className={`${styles.formControl} ${styles.formControlCountry}`}>
+              <label htmlFor="country-select" className={styles.formLabel}>
+                Country
+              </label>
+              <div className={styles.countryDropdown} ref={countryDropdownRef}>
+                <button
+                  type="button"
+                  id="country-select"
+                  className={`${styles.countrySelect} ${isCountryOpen ? styles.countrySelectOpen : ''}`}
+                  onClick={() => setIsCountryOpen((prev) => !prev)}
+                  aria-haspopup="listbox"
+                  aria-expanded={isCountryOpen}
+                >
+                  <span>{country || 'Select country'}</span>
+                  <span className={styles.countryCaret} aria-hidden="true">▾</span>
+                </button>
+                {isCountryOpen && (
+                  <div className={styles.countryMenu} role="listbox">
+                    {EUROPEAN_COUNTRIES.map((c) => (
+                      <button
+                        key={c}
+                        type="button"
+                        className={styles.countryMenuItem}
+                        role="option"
+                        aria-selected={country === c}
+                        onClick={() => {
+                          setCountry(c);
+                          setIsCountryOpen(false);
+                        }}
+                      >
+                        {c}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
             <button type="submit" className={styles.submitButton}>
               Get Early Access
             </button>

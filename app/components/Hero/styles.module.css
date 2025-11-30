@@ -1,8 +1,9 @@
 .hero {
+  --navbar-height: 96px;
   padding: 0 65px;
   display: flex;
   align-items: center;
-  min-height: 716px;
+  min-height: calc(100vh - 80px - var(--navbar-height));
 }
 
 .heroCard {
@@ -13,11 +14,11 @@
   align-items: center;
   gap: var(--space-6);
   padding: var(--space-6) 95px;
-  min-height: 716px;
+  min-height: calc(100vh - 80px - var(--navbar-height));
 }
 
 .heroContent {
-  flex: 1;
+  flex: 0 1 40%;
   display: flex;
   flex-direction: column;
   gap: var(--space-6);
@@ -27,11 +28,11 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-6);
-  max-width: 475px;
+  /* max-width: 475px; */
 }
 
 .heroTitle {
-  font-size: 48px;
+  font-size: 64px;
   font-weight: 800;
   color: var(--white);
   line-height: 1.1;
@@ -48,20 +49,51 @@
 
 .emailForm {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
+  align-items: flex-end;
   gap: var(--space-3);
   width: 100%;
+  margin-top: var(--space-16);
+}
+
+.formControl {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  flex: 1 1 0;
+}
+
+.formControlCountry {
+  flex: 0 0 auto;
+  min-width: 200px;
+}
+
+.formLabel {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--white);
+}
+
+.countryDropdown {
+  position: relative;
+  flex: 0 0 auto;
+  min-width: 180px;
 }
 
 .emailInput,
 .countrySelect {
-  padding: var(--space-3) var(--space-4);
+  padding: var(--space-3) calc(var(--space-4) + 6px) var(--space-3) var(--space-4);
   border-radius: var(--radius-md);
   border: none;
-  font-size: 14px;
+  font-size: 16px;
   background-color: var(--white);
   color: var(--black);
   font-family: var(--font-family-base);
+  transition: box-shadow 0.2s ease;
+}
+
+.emailInput {
+  flex: 1 1 0;
 }
 
 .emailInput::placeholder {
@@ -69,14 +101,73 @@
 }
 
 .countrySelect {
+  flex: 0 0 auto;
   width: 100%;
-  max-width: 100%;
+  min-width: 180px;
   cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  transition: background-color 0.2s ease;
 }
 
-.countrySelect option {
-  color: var(--black);
+.countrySelect:hover {
+  background-color: #f5f5f5;
+}
+
+.countrySelectOpen {
+  box-shadow: none;
+}
+
+.countryCaret {
+  font-size: 16px;
+  color: #666;
+}
+
+.emailInput:focus,
+.emailInput:focus-visible,
+.countrySelect:focus,
+.countrySelect:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(231, 52, 57, 0.25);
+}
+
+.countryMenu {
+  position: absolute;
+  top: calc(100% + var(--space-3));
+  left: 0;
+  width: 100%;
   background-color: var(--white);
+  color: var(--black);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.18);
+  padding: var(--space-2) 0;
+  max-height: 260px;
+  overflow-y: auto;
+  z-index: 10;
+}
+
+.countryMenuItem {
+  width: 100%;
+  text-align: left;
+  padding: var(--space-3) var(--space-4);
+  background: transparent;
+  border: none;
+  color: var(--black);
+  font-size: 16px;
+  font-weight: 400;
+  letter-spacing: -0.2px;
+  cursor: pointer;
+  transition: background-color 0.15s ease, opacity 0.15s ease;
+}
+
+.countryMenuItem:hover {
+  background-color: #f5f5f5;
+}
+
+.countryMenuItem[aria-selected="true"] {
+  opacity: 0.85;
 }
 
 .submitButton {
@@ -85,22 +176,22 @@
   border: 1px solid var(--white);
   background-color: transparent;
   color: var(--white);
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 500;
   letter-spacing: 1px;
   transition: background-color 0.2s ease;
   white-space: nowrap;
   cursor: pointer;
+  flex: 0 0 auto;
 }
 
 .submitButton:hover {
   background-color: rgba(255, 255, 255, 0.1);
 }
-
 .message {
   padding: var(--space-3) var(--space-4);
   border-radius: var(--radius-md);
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 500;
   margin-top: var(--space-2);
 }
@@ -118,14 +209,16 @@
 }
 
 .heroImage {
-  width: 446px;
-  height: 443px;
-  flex-shrink: 0;
+  flex: 0 1 60%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .heroImage img {
   width: 100%;
-  height: 100%;
+  max-width: 655px;
+  height: auto;
   object-fit: cover;
 }
 
@@ -146,14 +239,15 @@
 
 @media (max-width: 768px) {
   .hero {
+    --navbar-height: 120px;
     padding: 0 var(--space-6);
-    min-height: auto;
+    min-height: calc(100vh - 80px - var(--navbar-height));
   }
 
   .heroCard {
     flex-direction: column;
     padding: var(--space-8);
-    min-height: auto;
+    min-height: calc(100vh - 80px - var(--navbar-height));
   }
 
   .heroContent {
@@ -174,6 +268,12 @@
 
   .emailForm {
     width: 100%;
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .countryDropdown {
+    width: 100%;
   }
 
   .emailInput,
@@ -183,8 +283,6 @@
   }
 
   .heroImage {
-    width: 100%;
-    height: auto;
-    max-width: 350px;
+    display: none;
   }
 }
