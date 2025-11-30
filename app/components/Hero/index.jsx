@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import styles from './styles.module.css';
 import { supabase } from './supabase';
 import { validateEmail } from './validation';
+import SocialMedia from '../SocialMedia';
 
 const EUROPEAN_COUNTRIES = [
   'Austria', 'Belgium', 'Bulgaria', 'Croatia', 'Cyprus', 'Czech Republic',
@@ -20,6 +21,7 @@ export default function Hero() {
   const [messageType, setMessageType] = useState('');
   const [isCountryOpen, setIsCountryOpen] = useState(false);
   const countryDropdownRef = useRef(null);
+  const [showSuccess, setShowSuccess] = useState(false);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -32,6 +34,17 @@ export default function Hero() {
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  useEffect(() => {
+    if (!showSuccess) return undefined;
+    const handleEsc = (event) => {
+      if (event.key === 'Escape') {
+        setShowSuccess(false);
+      }
+    };
+    document.addEventListener('keydown', handleEsc);
+    return () => document.removeEventListener('keydown', handleEsc);
+  }, [showSuccess]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -64,8 +77,9 @@ export default function Hero() {
           setMessageType('error');
         }
       } else {
-        setMessage('Thanks for signing up! Check your email for updates.');
-        setMessageType('success');
+        setShowSuccess(true);
+        setMessage('');
+        setMessageType('');
         setEmail('');
         setCountry('');
       }
@@ -115,7 +129,25 @@ export default function Hero() {
                   aria-expanded={isCountryOpen}
                 >
                   <span>{country || 'Select country'}</span>
-                  <span className={styles.countryCaret} aria-hidden="true">▾</span>
+                  <span className={styles.countryCaret} aria-hidden="true">
+                    <svg
+                      width="16"
+                      height="16"
+                      viewBox="0 0 16 16"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
+                      aria-hidden="true"
+                      focusable="false"
+                    >
+                      <path
+                        d="M13 5.5L8 10.5L3 5.5"
+                        stroke="currentColor"
+                        strokeWidth="1.5"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                  </span>
                 </button>
                 {isCountryOpen && (
                   <div className={styles.countryMenu} role="listbox">
@@ -142,11 +174,35 @@ export default function Hero() {
               Get Early Access
             </button>
           </form>
-          {message && (
-            <div className={`${styles.message} ${styles[messageType]}`}>
-              {message}
+      {message && (
+        <div className={`${styles.message} ${styles[messageType]}`}>
+          {message}
+        </div>
+      )}
+
+      {showSuccess && (
+        <div className={styles.successOverlay} role="dialog" aria-modal="true" aria-labelledby="success-title">
+          <div className={styles.successCard}>
+            <h2 id="success-title" className={styles.successTitle}>You&apos;re on the list!</h2>
+            <p className={styles.successSubtitle}>
+              Thanks for being among the first to show interest.
+            </p>
+            <div className={styles.successCheck} aria-hidden="true">
+              <svg width="80" height="80" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M14 34.5L26.5 47L51 22.5" stroke="#FF3629" strokeWidth="6" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
             </div>
-          )}
+            <p className={styles.successBody}>We&apos;ll notify you as soon as the product is live.</p>
+            <button type="button" className={styles.successButton} onClick={() => setShowSuccess(false)}>
+              Continue
+            </button>
+            <div className={styles.successSocial}>
+              <SocialMedia variant="modal" />
+            </div>
+            <p className={styles.successEmail}>info@nxtcollect.com</p>
+          </div>
+        </div>
+      )}
         </div>
         <div className={styles.heroImage}>
           <img src="/img/right-1.png" alt="Collectibles" />

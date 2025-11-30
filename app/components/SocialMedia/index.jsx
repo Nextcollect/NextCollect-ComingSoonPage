@@ -26,19 +26,37 @@ const SOCIAL_MEDIA_LINKS = [
 
 export default function SocialMedia({ variant = 'default' }) {
   const isFooter = variant === 'footer';
+  const isModal = variant === 'modal';
+
+  const containerClass = [
+    styles.socialIcons,
+    isFooter ? styles.socialIconsFooter : '',
+    isModal ? styles.socialIconsModal : ''
+  ]
+    .filter(Boolean)
+    .join(' ');
+
+  const linkClass = isFooter
+    ? styles.socialLinkFooter
+    : isModal
+      ? styles.socialLinkModal
+      : styles.socialLink;
+
+  const iconClass = isFooter
+    ? styles.socialIconFooter
+    : isModal
+      ? styles.socialIconModal
+      : styles.socialIcon;
 
   return (
-    <div
-      className={`${styles.socialIcons} ${isFooter ? styles.socialIconsFooter : ''}`}
-      aria-label="Social media links"
-    >
+    <div className={containerClass} aria-label="Social media links">
       {SOCIAL_MEDIA_LINKS.map((link) => (
         <a
           key={link.id}
           href={link.url}
           target="_blank"
           rel="noopener noreferrer"
-          className={isFooter ? styles.socialLinkFooter : styles.socialLink}
+          className={linkClass}
           title={link.name}
           aria-label={link.name}
         >
@@ -47,7 +65,7 @@ export default function SocialMedia({ variant = 'default' }) {
             alt={link.name}
             width={16}
             height={16}
-            className={isFooter ? styles.socialIconFooter : styles.socialIcon}
+            className={iconClass}
             priority={isFooter}
           />
         </a>

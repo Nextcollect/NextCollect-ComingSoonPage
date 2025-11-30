@@ -3,6 +3,8 @@
   align-items: center;
   gap: var(--space-32);
   padding: var(--space-20) var(--space-40);
+  margin-top: var(--space-20);
+  margin-bottom: var(--space-20);
 }
 
 .textColumn {
@@ -44,13 +46,13 @@
 
 .imageColumn img {
   width: 100%;
-  max-width: 446px;
+  max-width: 520px;
   height: auto;
   object-fit: cover;
 }
 
 .featuresSection {
-  padding: var(--space-12) var(--space-40) var(--space-20);
+  padding: var(--space-20) var(--space-40) var(--space-32);
 }
 
 .featuresGrid {
@@ -69,6 +71,9 @@
 .featureIcon {
   width: 41px;
   height: 41px;
+  display: inline-block;
+  /* Recolor external SVG icons (originally black) to primary brand red */
+  filter: invert(30%) sepia(62%) saturate(4273%) hue-rotate(352deg) brightness(103%) contrast(101%);
 }
 
 .featureTitle {
@@ -92,7 +97,7 @@
 }
 
 .ctaSection {
-  padding: var(--space-12) var(--space-40);
+  padding: var(--space-10) var(--space-40);
   border-top: 1px solid var(--gray-200);
   border-bottom: 1px solid var(--gray-200);
 }
@@ -124,7 +129,7 @@
 .ctaText {
   flex: 1;
   text-align: right;
-  font-size: 16px;
+  font-size: 20px;
   font-weight: 400;
   color: var(--black);
   opacity: 0.7;
@@ -136,10 +141,12 @@
   .section {
     gap: var(--space-16);
     padding: var(--space-16) var(--space-12);
+    margin-top: var(--space-16);
+    margin-bottom: var(--space-16);
   }
 
   .featuresSection {
-    padding: var(--space-12);
+    padding: var(--space-16);
   }
 
   .ctaSection {
@@ -147,8 +154,8 @@
   }
 
   .imageColumn img {
-    width: 350px;
-    height: 350px;
+    width: 420px;
+    height: 420px;
   }
 
   .featuresGrid {
@@ -161,6 +168,8 @@
     flex-direction: column;
     padding: var(--space-12) var(--space-6);
     gap: var(--space-8);
+    margin-top: var(--space-12);
+    margin-bottom: var(--space-12);
   }
 
   .textColumn {
@@ -182,7 +191,7 @@
   }
 
   .featuresSection {
-    padding: var(--space-8) var(--space-6);
+    padding: var(--space-12) var(--space-6);
   }
 
   .featuresGrid {

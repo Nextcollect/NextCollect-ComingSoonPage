@@ -27,17 +27,17 @@ export function AboutSection() {
 export function FeaturesSection() {
   const features = [
     {
-      icon: '/img/frame.svg',
+      icon: '/img/NextCollect_All-In-One_Icon.svg',
       title: 'Everything In One Place',
       description: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Proin nibh eros, facilisis quis velit et, efficitur congue eros.'
     },
     {
-      icon: '/img/frame.svg',
+      icon: '/img/NextCollect_Verification_Icon.svg',
       title: 'Verified Users',
       description: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Proin nibh eros, facilisis quis velit et.'
     },
     {
-      icon: '/img/frame.svg',
+      icon: '/img/NextCollect_Language_Icon.svg',
       title: 'Multi Language',
       description: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Proin nibh eros, facilisis quis velit et, efficitur congue eros.'
     }

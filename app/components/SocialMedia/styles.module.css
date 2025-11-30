@@ -8,6 +8,11 @@
   gap: var(--space-4);
 }
 
+.socialIconsModal {
+  gap: var(--space-6);
+  justify-content: center;
+}
+
 .socialLink {
   display: flex;
   align-items: center;
@@ -42,6 +47,20 @@
   filter: brightness(0) invert(1);
 }
 
+.socialLinkModal {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-1);
+  text-decoration: none;
+}
+
+.socialIconModal {
+  width: 18px;
+  height: 18px;
+  filter: brightness(0);
+}
+
 .socialLink:hover .socialIcon,
 .socialLink:focus-visible .socialIcon {
   filter: invert(30%) sepia(62%) saturate(4273%) hue-rotate(352deg) brightness(103%) contrast(101%);
@@ -61,6 +80,11 @@
 .socialLinkFooter:hover,
 .socialLinkFooter:focus-visible {
   outline: none;
+}
+
+.socialLinkModal:hover .socialIconModal,
+.socialLinkModal:focus-visible .socialIconModal {
+  filter: brightness(0);
 }
 
 @media (max-width: 768px) {
