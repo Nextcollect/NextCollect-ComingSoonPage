@@ -7,6 +7,9 @@ tsconfig.tsbuildinfo
 # Node dependencies
 node_modules/
 
+# Environment variables
+.env
+
 # Mac system files
 .DS_Store
 
