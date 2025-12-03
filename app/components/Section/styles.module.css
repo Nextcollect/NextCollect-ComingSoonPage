@@ -72,8 +72,8 @@
   width: 41px;
   height: 41px;
   display: inline-block;
-  /* Recolor external SVG icons (originally black) to primary brand red */
-  filter: invert(30%) sepia(62%) saturate(4273%) hue-rotate(352deg) brightness(103%) contrast(101%);
+  /* Recolor external SVG icons (originally black) to primary brand purple */
+  filter: invert(19%) sepia(92%) saturate(2916%) hue-rotate(243deg) brightness(91%) contrast(101%);
 }
 
 .featureTitle {
@@ -123,7 +123,7 @@
 }
 
 .ctaButton:hover {
-  background-color: #d62b26;
+  background-color: #3f0ddc;
 }
 
 .ctaText {

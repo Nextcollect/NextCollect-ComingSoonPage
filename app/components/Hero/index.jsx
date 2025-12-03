@@ -14,14 +14,6 @@ const EUROPEAN_COUNTRIES = [
   'Slovenia', 'Spain', 'Sweden', 'United Kingdom', 'Switzerland', 'Norway'
 ].sort();
 
-const getMilestoneText = (position) => {
-  if (position <= 100) return "You're one of the first 100 joining this platform";
-  if (position <= 500) return "You're one of the first 500 joining this platform";
-  if (position <= 1000) return "You're one of the first 1000 joining this platform";
-  if (position <= 2000) return "You're one of the first 2000 joining this platform";
-  return `You're registrant #${position}`;
-};
-
 export default function Hero() {
   const [email, setEmail] = useState('');
   const [country, setCountry] = useState('');
@@ -30,7 +22,6 @@ export default function Hero() {
   const [isCountryOpen, setIsCountryOpen] = useState(false);
   const countryDropdownRef = useRef(null);
   const [showSuccess, setShowSuccess] = useState(false);
-  const [registrationPosition, setRegistrationPosition] = useState(null);
   const [emailSent, setEmailSent] = useState(false);
   const [resendEmail, setResendEmail] = useState('');
 
@@ -62,6 +53,12 @@ export default function Hero() {
     setMessage('');
     setMessageType('');
 
+    if (!supabase) {
+      setMessage('Signups are unavailable right now. Please set the Supabase keys.');
+      setMessageType('error');
+      return;
+    }
+
     if (!email.trim() || !country.trim()) {
       setMessage('Please fill in all fields');
       setMessageType('error');
@@ -75,11 +72,9 @@ export default function Hero() {
     }
 
     try {
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('early_access_signups')
-        .insert([{ email: email.trim(), country }])
-        .select('registration_position')
-        .maybeSingle();
+        .insert([{ email: email.trim(), country }]);
 
       if (error) {
         if (error.code === '23505') {
@@ -90,7 +85,6 @@ export default function Hero() {
           setMessageType('error');
         }
       } else {
-        setRegistrationPosition(data?.registration_position);
         setResendEmail(email.trim());
         setEmailSent(true);
         setShowSuccess(true);
@@ -211,11 +205,6 @@ export default function Hero() {
             <div className={styles.successCheck} aria-hidden="true">
               <dotlottie-wc src="https://lottie.host/56c326e0-28f2-4909-b3d6-05d01ba82897/DwmTJJcvkN.lottie" style={{width: '300px', height: '300px'}} autoplay loop></dotlottie-wc>
             </div>
-            {registrationPosition && (
-              <p className={styles.successMilestone}>
-                {getMilestoneText(registrationPosition)}
-              </p>
-            )}
             <p className={styles.successBody}>We&apos;ll notify you as soon as the product is live.</p>
             {emailSent && (
               <div className={styles.emailNotification}>

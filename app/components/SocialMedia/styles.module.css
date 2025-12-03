@@ -63,7 +63,7 @@
 
 .socialLink:hover .socialIcon,
 .socialLink:focus-visible .socialIcon {
-  filter: invert(30%) sepia(62%) saturate(4273%) hue-rotate(352deg) brightness(103%) contrast(101%);
+  filter: invert(19%) sepia(92%) saturate(2916%) hue-rotate(243deg) brightness(91%) contrast(101%);
   transform: translateY(-1px);
 }
 
@@ -84,7 +84,7 @@
 
 .socialLinkModal:hover .socialIconModal,
 .socialLinkModal:focus-visible .socialIconModal {
-  filter: invert(30%) sepia(62%) saturate(4273%) hue-rotate(352deg) brightness(103%) contrast(101%);
+  filter: invert(19%) sepia(92%) saturate(2916%) hue-rotate(243deg) brightness(91%) contrast(101%);
 }
 
 @media (max-width: 768px) {

@@ -84,12 +84,12 @@
 .countrySelect {
   padding: var(--space-3) calc(var(--space-4) + 6px) var(--space-3) var(--space-4);
   border-radius: var(--radius-md);
-  border: none;
+  border: 1px solid transparent;
   font-size: 16px;
   background-color: var(--white);
   color: var(--black);
   font-family: var(--font-family-base);
-  transition: box-shadow 0.2s ease;
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
 }
 
 .emailInput {
@@ -113,7 +113,7 @@
 }
 
 .countrySelect:hover {
-  background-color: #f5f5f5;
+  background-color: #e3dfd5;
 }
 
 .countrySelectOpen {
@@ -137,7 +137,8 @@
 .countrySelect:focus,
 .countrySelect:focus-visible {
   outline: none;
-  box-shadow: 0 0 0 2px rgba(231, 52, 57, 0.25);
+  border-color: rgba(71, 15, 244, 0.55);
+  box-shadow: 0 0 0 2px rgba(71, 15, 244, 0.18);
 }
 
 .countryMenu {
@@ -170,11 +171,11 @@
 }
 
 .countryMenuItem:hover {
-  background-color: #f5f5f5;
+  background-color: #d8d1c2;
 }
 
 .countryMenuItem[aria-selected="true"] {
-  opacity: 0.85;
+  background-color: #d8d1c2;
 }
 
 .submitButton {
@@ -193,7 +194,7 @@
 }
 
 .submitButton:hover {
-  background-color: rgba(255, 255, 255, 0.1);
+  background-color: rgba(242, 240, 235, 0.1);
 }
 .message {
   padding: var(--space-2) 0;
@@ -202,6 +203,7 @@
   font-weight: 500;
   margin-top: var(--space-2);
   color: var(--white);
+  max-width: 480px;
 }
 
 .error {
@@ -288,7 +290,7 @@
 }
 
 .successButton:hover {
-  background-color: #e12f28;
+  background-color: #3f0ddc;
 }
 
 .successSocial {
