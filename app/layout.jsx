@@ -1,3 +1,4 @@
+import Script from 'next/script';
 import './styles/tokens.css';
 import './styles/globals.css';
 
@@ -10,6 +11,7 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <body>{children}</body>
+      <Script src="https://unpkg.com/@lottiefiles/dotlottie-wc@0.8.5/dist/dotlottie-wc.js" type="module" />
     </html>
   );
 }

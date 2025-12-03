@@ -14,6 +14,14 @@ const EUROPEAN_COUNTRIES = [
   'Slovenia', 'Spain', 'Sweden', 'United Kingdom', 'Switzerland', 'Norway'
 ].sort();
 
+const getMilestoneText = (position) => {
+  if (position <= 100) return "You're one of the first 100 joining this platform";
+  if (position <= 500) return "You're one of the first 500 joining this platform";
+  if (position <= 1000) return "You're one of the first 1000 joining this platform";
+  if (position <= 2000) return "You're one of the first 2000 joining this platform";
+  return `You're registrant #${position}`;
+};
+
 export default function Hero() {
   const [email, setEmail] = useState('');
   const [country, setCountry] = useState('');
@@ -22,6 +30,9 @@ export default function Hero() {
   const [isCountryOpen, setIsCountryOpen] = useState(false);
   const countryDropdownRef = useRef(null);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [registrationPosition, setRegistrationPosition] = useState(null);
+  const [emailSent, setEmailSent] = useState(false);
+  const [resendEmail, setResendEmail] = useState('');
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -64,9 +75,11 @@ export default function Hero() {
     }
 
     try {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('early_access_signups')
-        .insert([{ email: email.trim(), country }]);
+        .insert([{ email: email.trim(), country }])
+        .select('registration_position')
+        .maybeSingle();
 
       if (error) {
         if (error.code === '23505') {
@@ -77,6 +90,9 @@ export default function Hero() {
           setMessageType('error');
         }
       } else {
+        setRegistrationPosition(data?.registration_position);
+        setResendEmail(email.trim());
+        setEmailSent(true);
         setShowSuccess(true);
         setMessage('');
         setMessageType('');
@@ -87,6 +103,11 @@ export default function Hero() {
       setMessage('Something went wrong. Please try again.');
       setMessageType('error');
     }
+  };
+
+  const handleResendEmail = () => {
+    setEmailSent(false);
+    setTimeout(() => setEmailSent(true), 500);
   };
 
   return (
@@ -188,18 +209,29 @@ export default function Hero() {
               Thanks for being among the first to show interest.
             </p>
             <div className={styles.successCheck} aria-hidden="true">
-              <svg width="80" height="80" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M14 34.5L26.5 47L51 22.5" stroke="#FF3629" strokeWidth="6" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
+              <dotlottie-wc src="https://lottie.host/56c326e0-28f2-4909-b3d6-05d01ba82897/DwmTJJcvkN.lottie" style={{width: '300px', height: '300px'}} autoplay loop></dotlottie-wc>
             </div>
+            {registrationPosition && (
+              <p className={styles.successMilestone}>
+                {getMilestoneText(registrationPosition)}
+              </p>
+            )}
             <p className={styles.successBody}>We&apos;ll notify you as soon as the product is live.</p>
+            {emailSent && (
+              <div className={styles.emailNotification}>
+                <p>Check your email for updates. Don&apos;t see it? Check your spam folder.</p>
+                <button type="button" className={styles.resendLink} onClick={handleResendEmail}>
+                  Resend email
+                </button>
+              </div>
+            )}
             <button type="button" className={styles.successButton} onClick={() => setShowSuccess(false)}>
               Continue
             </button>
             <div className={styles.successSocial}>
               <SocialMedia variant="modal" />
             </div>
-            <p className={styles.successEmail}>info@nxtcollect.com</p>
+            <a href="mailto:info@nxtcollect.com" className={styles.successEmail}>info@nxtcollect.com</a>
           </div>
         </div>
       )}

@@ -84,7 +84,7 @@
 
 .socialLinkModal:hover .socialIconModal,
 .socialLinkModal:focus-visible .socialIconModal {
-  filter: brightness(0);
+  filter: invert(30%) sepia(62%) saturate(4273%) hue-rotate(352deg) brightness(103%) contrast(101%);
 }
 
 @media (max-width: 768px) {
