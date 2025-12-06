@@ -18,7 +18,7 @@ const getMilestoneText = (position) => {
   const milestones = [100, 500, 1000, 2000, 3000, 5000, 10000];
   for (const threshold of milestones) {
     if (position <= threshold) {
-      return `You're one of the first ${threshold} joining this platform`;
+      return `You’re now part of the first ${threshold} helping shape the platform`;
     }
   }
   return `You're registrant #${position}`;
@@ -94,7 +94,7 @@ export default function Hero() {
           setMessage('This email is already registered');
           setMessageType('error');
         } else {
-          setMessage('Error signing up. Please try again.');
+          setMessage('There was an issue with this entry. Please try again.');
           setMessageType('error');
         }
       } else {
@@ -212,19 +212,22 @@ export default function Hero() {
       {showSuccess && (
         <div className={styles.successOverlay} role="dialog" aria-modal="true" aria-labelledby="success-title">
           <div className={styles.successCard}>
-            <h2 id="success-title" className={styles.successTitle}>You&apos;re on the list!</h2>
+            <h2 id="success-title" className={styles.successTitle}>You&apos;re in the list</h2>
             <p className={styles.successSubtitle}>
-              Thanks for being among the first to show interest.
+              Thanks for joining our early group. You’ll be one of the founding members and get access before anyone else.
             </p>
-            <div className={styles.successCheck} aria-hidden="true">
-              <dotlottie-wc src="https://lottie.host/56c326e0-28f2-4909-b3d6-05d01ba82897/DwmTJJcvkN.lottie" style={{width: '300px', height: '300px'}} autoplay></dotlottie-wc>
-            </div>
             {registrationPosition && (
               <p className={styles.successMilestone}>
                 {getMilestoneText(registrationPosition)}
               </p>
             )}
-            <p className={styles.successBody}>We&apos;ll notify you as soon as the product is live.</p>
+            <div className={styles.successCheck} aria-hidden="true">
+              <dotlottie-wc
+                class={styles.successLottie}
+                src="https://lottie.host/56c326e0-28f2-4909-b3d6-05d01ba82897/DwmTJJcvkN.lottie"
+                autoplay
+              ></dotlottie-wc>
+            </div>
             {emailSent && (
               <div className={styles.emailNotification}>
                 <p>Check your email for updates. Don&apos;t see it? Check your spam folder.</p>
@@ -236,16 +239,13 @@ export default function Hero() {
             <button type="button" className={styles.successButton} onClick={() => setShowSuccess(false)}>
               Continue
             </button>
-            <div className={styles.successSocial}>
-              <SocialMedia variant="modal" />
-            </div>
             <a href="mailto:info@nxtcollect.com" className={styles.successEmail}>info@nxtcollect.com</a>
           </div>
         </div>
       )}
         </div>
         <div className={styles.heroImage}>
-          <img src="/img/right-1.png" alt="Collectibles" />
+          <img src="/img/Test_header_Image.png" alt="Collectibles" />
         </div>
       </div>
     </section>

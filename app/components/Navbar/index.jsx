@@ -64,8 +64,7 @@ export default function Navbar() {
     <header className={styles.navbar}>
       <div className={styles.leftSection}>
         <div className={styles.logo}>
-          <Image src="/img/vector.svg" alt="Next Collect Logo" width={21} height={32} priority />
-          <span className={styles.logoText}>protech</span>
+          <Image src="/img/nextcollect_Logo_full-color.svg" alt="NextCollect Logo" width={150} height={32} priority />
         </div>
         <SocialMedia />
       </div>

@@ -20,15 +20,9 @@
 }
 
 .logo img {
-  width: 21.03px;
+  width: auto;
   height: 32px;
-}
-
-.logoText {
-  font-size: 32px;
-  font-weight: 700;
-  color: var(--color-primary);
-  line-height: 1.1;
+  max-width: 200px;
 }
 
 .rightSection {

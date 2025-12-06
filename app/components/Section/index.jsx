@@ -18,7 +18,7 @@ export function AboutSection() {
         </p>
       </div>
       <div className={styles.imageColumn}>
-        <img src="/img/right-1.png" alt="Collectors community" />
+        <img src="/img/Test_header_Image.png" alt="Collectors community" />
       </div>
     </section>
   );

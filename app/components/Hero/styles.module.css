@@ -238,41 +238,49 @@
 
 .successCard {
   background: var(--white);
-  border-radius: 18px;
-  width: min(540px, 100%);
+  border-radius: 24px;
+  width: min(560px, 100%);
   box-shadow: 0 20px 50px rgba(0, 0, 0, 0.16);
   text-align: center;
   color: var(--gray-900);
   padding: var(--space-12) var(--space-12) var(--space-10);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-5);
 }
 
 .successTitle {
-  font-size: 28px;
+  font-size: 38px;
   font-weight: 800;
+  color: var(--black);
   margin: 0 0 var(--space-3) 0;
 }
 
 .successSubtitle {
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 400;
-  color: #3f3f3f;
-  margin: 0 0 var(--space-8) 0;
-  letter-spacing: 0.2px;
+  color: #5b5a67;
+  margin: 0;
+  letter-spacing: 0.1px;
+  line-height: 1.7;
+  max-width: 520px;
 }
 
 .successCheck {
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: var(--space-8);
+  margin: var(--space-4) 0 var(--space-5);
 }
 
 .successBody {
   font-size: 15px;
   font-weight: 400;
   color: #3f3f3f;
-  margin: 0 0 var(--space-8) 0;
-  letter-spacing: 0.2px;
+  margin: 0 0 var(--space-4) 0;
+  letter-spacing: 0.15px;
+  max-width: 520px;
 }
 
 .successButton {
@@ -281,35 +289,35 @@
   background-color: var(--color-primary);
   color: var(--white);
   border: none;
-  border-radius: 8px;
-  padding: var(--space-3) 0;
-  font-size: 15px;
+  border-radius: 10px;
+  padding: var(--space-4) 0;
+  font-size: 16px;
   font-weight: 600;
   cursor: pointer;
-  margin-bottom: var(--space-10);
+  margin: var(--space-5) 0 var(--space-4);
 }
 
 .successButton:hover {
   background-color: #3f0ddc;
 }
 
-.successSocial {
-  margin-bottom: var(--space-6);
-}
-
 .successMilestone {
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 600;
   color: var(--color-primary);
-  margin: 0 0 var(--space-6) 0;
-  letter-spacing: 0.2px;
+  margin: var(--space-4) 0 0;
+  letter-spacing: 0.15px;
+  background: rgba(71, 15, 244, 0.08);
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-pill);
 }
 
 .emailNotification {
-  background-color: #f5f5f5;
-  border-radius: 8px;
-  padding: var(--space-4);
-  margin-bottom: var(--space-8);
+  background: rgba(28, 27, 41, 0.05);
+  border: none; 
+  border-radius: 12px;
+  padding: var(--space-4) var(--space-5);
+  margin: var(--space-3) 0 0;
 }
 
 .emailNotification p {
@@ -328,11 +336,11 @@
   cursor: pointer;
   padding: 0;
   text-decoration: underline;
-  transition: opacity 0.2s ease;
+  transition: color 0.2s ease;
 }
 
 .resendLink:hover {
-  opacity: 0.8;
+  color: #3620c8;
 }
 
 .successEmail {
@@ -347,6 +355,18 @@
 .successEmail:hover {
   opacity: 0.8;
   text-decoration: underline;
+}
+
+.successLottie {
+  width: 260px;
+  height: 260px;
+  opacity: 0.85;
+}
+
+.successDivider {
+  height: 1px;
+  background: rgba(28, 27, 41, 0.08);
+  margin: var(--space-5) 0 var(--space-4);
 }
 
 @media (max-width: 1200px) {
