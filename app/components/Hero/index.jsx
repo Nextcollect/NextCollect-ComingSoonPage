@@ -14,6 +14,16 @@ const EUROPEAN_COUNTRIES = [
   'Slovenia', 'Spain', 'Sweden', 'United Kingdom', 'Switzerland', 'Norway'
 ].sort();
 
+const getMilestoneText = (position) => {
+  const milestones = [100, 500, 1000, 2000, 3000, 5000, 10000];
+  for (const threshold of milestones) {
+    if (position <= threshold) {
+      return `You're one of the first ${threshold} joining this platform`;
+    }
+  }
+  return `You're registrant #${position}`;
+};
+
 export default function Hero() {
   const [email, setEmail] = useState('');
   const [country, setCountry] = useState('');
@@ -24,6 +34,7 @@ export default function Hero() {
   const [showSuccess, setShowSuccess] = useState(false);
   const [emailSent, setEmailSent] = useState(false);
   const [resendEmail, setResendEmail] = useState('');
+  const [registrationPosition, setRegistrationPosition] = useState(null);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -72,9 +83,11 @@ export default function Hero() {
     }
 
     try {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('early_access_signups')
-        .insert([{ email: email.trim(), country }]);
+        .insert([{ email: email.trim(), country }])
+        .select('registration_position')
+        .maybeSingle();
 
       if (error) {
         if (error.code === '23505') {
@@ -85,6 +98,7 @@ export default function Hero() {
           setMessageType('error');
         }
       } else {
+        setRegistrationPosition(data?.registration_position);
         setResendEmail(email.trim());
         setEmailSent(true);
         setShowSuccess(true);
@@ -205,6 +219,11 @@ export default function Hero() {
             <div className={styles.successCheck} aria-hidden="true">
               <dotlottie-wc src="https://lottie.host/56c326e0-28f2-4909-b3d6-05d01ba82897/DwmTJJcvkN.lottie" style={{width: '300px', height: '300px'}} autoplay loop></dotlottie-wc>
             </div>
+            {registrationPosition && (
+              <p className={styles.successMilestone}>
+                {getMilestoneText(registrationPosition)}
+              </p>
+            )}
             <p className={styles.successBody}>We&apos;ll notify you as soon as the product is live.</p>
             {emailSent && (
               <div className={styles.emailNotification}>
