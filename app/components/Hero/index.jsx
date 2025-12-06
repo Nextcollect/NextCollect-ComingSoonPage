@@ -217,7 +217,7 @@ export default function Hero() {
               Thanks for being among the first to show interest.
             </p>
             <div className={styles.successCheck} aria-hidden="true">
-              <dotlottie-wc src="https://lottie.host/56c326e0-28f2-4909-b3d6-05d01ba82897/DwmTJJcvkN.lottie" style={{width: '300px', height: '300px'}} autoplay loop></dotlottie-wc>
+              <dotlottie-wc src="https://lottie.host/56c326e0-28f2-4909-b3d6-05d01ba82897/DwmTJJcvkN.lottie" style={{width: '300px', height: '300px'}} autoplay></dotlottie-wc>
             </div>
             {registrationPosition && (
               <p className={styles.successMilestone}>
