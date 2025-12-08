@@ -1,0 +1,36 @@
+{
+  "hero": {
+    "title": "Europas vertrauenswürdige Plattform für Sammler Start 2026",
+    "description": "Vernetzen Sie sich mit verifizierten Sammlern aus 6 europäischen Ländern. Diskutieren, authentifizieren und entdecken Sie Sammlerstücke, von Pokémon und Vinyl bis hin zu Kunst und Vintage-Uhren."
+  },
+  "section": {
+    "title": "Von Sammlern für Sammler entwickelt",
+    "subtitle": "Für europäische Sammler, denen die Community genauso wichtig ist wie ihre Sammlungen",
+    "paragraph": "Wir sind ein Team europäischer Sammler, das eine vertrauenswürdige Plattform für Sammler in ganz Europa aufbaut. Unser Ziel ist es, Fachleute und passionierte Sammler innerhalb ihrer Nische, ihrer lokalen Regionen und europäischen Communities zusammenzubringen und einen vertrauenswürdigen, fairen und transparenten Markt zu schaffen, der von europäischer Expertise und Wissen geprägt ist. Unsere Mission ist es, die Sammler-Community zugänglicher, zuverlässiger und wirklich auf Europa zugeschnitten zu machen. Egal, ob Sie ein lokaler Experte, ein erfahrener Sammler oder ein Unternehmen in einer Sammler-Nische sind, Next Collect hilft Ihnen, mit verifizierten Sammlern in Ihrer Nähe oder in ganz Europa in Kontakt zu treten, vertrauenswürdiges Wissen auszutauschen und sicher zu handeln – alles an einem Ort."
+  },
+  "features": {
+    "f1_title": "Alles an einem Ort",
+    "f1_description": "Keine verstreuten Gruppen mehr. Ein Zuhause für Sammler, um Trends zu verfolgen, andere zu treffen und über den europäischen Markt auf dem Laufenden zu bleiben.",
+    "f2_title": "Verifizierte Nutzer",
+    "f2_description": "Sie wissen, dass Sie mit echten Sammlern sprechen. Nur verifizierte Mitglieder, damit Handel und Beratung ehrlich und sammlerorientiert bleiben.",
+    "f3_title": "Mehrsprachig",
+    "f3_description": "Keine Sprachbarrieren. Sprechen Sie in Ihrer Muttersprache mit jedem Sammler in Europa, da Nachrichten in Echtzeit übersetzt werden."
+  },
+  "cta": {
+    "join": "Zur Warteliste"
+  },
+  "form": {
+    "email_label": "E-Mail",
+    "email_placeholder": "Geben Sie Ihre E-Mail-Adresse ein",
+    "country_label": "Land",
+    "select_country": "Land auswählen",
+    "submit": "Frühen Zugang erhalten"
+  },
+  "success": {
+    "title": "Du stehst auf der Liste",
+    "subtitle": "Danke, dass du unserer frühen Gruppe beigetreten bist. Du gehörst zu den ersten und erhältst Zugang vor allen anderen.",
+    "continue": "Weiter",
+    "check_email": "Prüfe deine E-Mails auf Updates. Nichts gefunden? Schau im Spam-Ordner nach.",
+    "resend": "E-Mail erneut senden"
+  }
+}

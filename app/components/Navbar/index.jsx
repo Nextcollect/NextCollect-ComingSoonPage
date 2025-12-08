@@ -1,9 +1,11 @@
-'use client';
+"use client";
 
 import Image from 'next/image';
 import { useEffect, useRef, useState } from 'react';
+import { useLanguage } from '../../context/LanguageProvider';
 import styles from './styles.module.css';
 import SocialMedia from '../SocialMedia';
+
 
 const SUPPORTED_LANGS = ['NL', 'EN', 'DE', 'FR', 'ES', 'IT'];
 
@@ -17,7 +19,7 @@ const LANGUAGE_LABELS = {
 };
 
 export default function Navbar() {
-  const [selectedLang, setSelectedLang] = useState('EN');
+  const { locale: selectedLang, setLocale, t } = useLanguage();
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef(null);
 
@@ -27,7 +29,7 @@ export default function Navbar() {
       const langCode = navigator.language.slice(0, 2).toUpperCase();
       return SUPPORTED_LANGS.includes(langCode) ? langCode : 'EN';
     })();
-    setSelectedLang(browserLang);
+    setLocale(browserLang);
   }, []);
 
   useEffect(() => {
@@ -43,7 +45,7 @@ export default function Navbar() {
   }, []);
 
   const handleSelect = (lang) => {
-    setSelectedLang(lang);
+    setLocale(lang);
     setIsOpen(false);
   };
 
@@ -98,7 +100,7 @@ export default function Navbar() {
           )}
         </div>
         <button className={styles.ctaButton} onClick={handleScrollToHero}>
-          Join The Waitlist
+          {t('cta.join') || 'Join The Waitlist'}
         </button>
       </div>
     </header>

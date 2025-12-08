@@ -1,0 +1,37 @@
+{
+  "hero": {
+    "title": "Europa's vertrouwde platform voor verzamelaars Lancering in 2026",
+    "description": "Kom in contact met geverifieerde verzamelaars in 6 Europese landen. Bespreek, authenticateer en ontdek verzamelobjecten, van Pokémon en vinyl tot kunst en vintage horloges."
+  },
+  "section": {
+    "title": "Gebouwd door verzamelaars, voor verzamelaars",
+    "subtitle": "Voor Europese verzamelaars die net zoveel waarde hechten aan hun community als aan hun collecties",
+    "paragraph": "Wij zijn een team van Europese verzamelaars dat een vertrouwd platform bouwt voor verzamelaars in heel Europa. Ons doel is om professionals en gepassioneerde verzamelaars binnen hun niche, lokale gebieden en Europese communities samen te brengen en zo een vertrouwde, eerlijke en transparante markt te creëren die wordt gevormd door Europese expertise en kennis. Onze missie is om de verzamelaarscommunity toegankelijker, betrouwbaarder en echt op Europa afgestemd te maken. Of u nu een lokale expert, een doorgewinterde verzamelaar of een bedrijf in een verzamelaarsniche bent, Next Collect helpt u in contact te komen met geverifieerde verzamelaars in de buurt of in heel Europa, betrouwbare kennis te delen en met vertrouwen te handelen, allemaal op één plek."
+  },
+  "features": {
+    "f1_title": "Alles op één plek",
+    "f1_description": "Geen verspreide groepen meer. Eén plek waar verzamelaars trends kunnen volgen, anderen kunnen ontmoeten en op de hoogte kunnen blijven van de Europese markt.",
+    "f2_title": "Geverifieerde gebruikers",
+    "f2_description": "Weet dat u met echte verzamelaars praat. Alleen geverifieerde leden, zodat handel en advies eerlijk en verzamelaarsgericht blijven.",
+    "f3_title": "Meertalig",
+    "f3_description": "Geen taalbarrières. Praat in uw moedertaal met elke verzamelaar in Europa, want berichten worden in realtime vertaald."
+  },
+  "cta": {
+    "join": "Word lid van de wachtlijst",
+    "subtext": "Word onderdeel van de eerste golf die zich bij de community aansluit en een founding member werd."
+  },
+  "form": {
+    "email_label": "E-mail",
+    "email_placeholder": "Voer uw e-mailadres in",
+    "country_label": "Land",
+    "select_country": "Selecteer land",
+    "submit": "Krijg vroege toegang"
+  },
+  "success": {
+    "title": "Je staat op de lijst",
+    "subtitle": "Bedankt voor het aanmelden bij onze vroege groep. Je bent een van de oprichters en krijgt eerder toegang dan anderen.",
+    "continue": "Doorgaan",
+    "check_email": "Controleer je e-mail voor updates. Zie je het niet? Controleer je spammap.",
+    "resend": "E-mail opnieuw verzenden"
+  }
+}

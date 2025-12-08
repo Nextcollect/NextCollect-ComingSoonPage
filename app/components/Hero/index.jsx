@@ -5,6 +5,7 @@ import styles from './styles.module.css';
 import { supabase } from './supabase';
 import { validateEmail } from './validation';
 import SocialMedia from '../SocialMedia';
+import { useLanguage } from '../../context/LanguageProvider';
 
 const EUROPEAN_COUNTRIES = [
   'Austria', 'Belgium', 'Bulgaria', 'Croatia', 'Cyprus', 'Czech Republic',
@@ -25,6 +26,7 @@ const getMilestoneText = (position) => {
 };
 
 export default function Hero() {
+  const { t } = useLanguage();
   const [email, setEmail] = useState('');
   const [country, setCountry] = useState('');
   const [message, setMessage] = useState('');
@@ -124,21 +126,21 @@ export default function Hero() {
         <div className={styles.heroContent}>
           <div className={styles.textContent}>
             <h1 className={styles.heroTitle}>
-              Europe's Trusted Platform for Collectors Launching 2026
+              {t('hero.title') || "Europe's Trusted Platform for Collectors Launching 2026"}
             </h1>
             <p className={styles.heroDescription}>
-              Connect with verified collectors across 6 European countries. Discuss, authenticate, and discover collectibles, from Pokémon and vinyl to art and vintage watches.
+              {t('hero.description') || 'Connect with verified collectors across 6 European countries. Discuss, authenticate, and discover collectibles, from Pokémon and vinyl to art and vintage watches.'}
             </p>
           </div>
           <form onSubmit={handleSubmit} className={styles.emailForm}>
             <div className={styles.formControl}>
               <label htmlFor="early-access-email" className={styles.formLabel}>
-                Email
+                {t('form.email_label') || 'Email'}
               </label>
               <input
                 type="email"
                 id="early-access-email"
-                placeholder="Enter your email address"
+                placeholder={t('form.email_placeholder') || 'Enter your email address'}
                 className={styles.emailInput}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -146,7 +148,7 @@ export default function Hero() {
             </div>
             <div className={`${styles.formControl} ${styles.formControlCountry}`}>
               <label htmlFor="country-select" className={styles.formLabel}>
-                Country
+                {t('form.country_label') || 'Country'}
               </label>
               <div className={styles.countryDropdown} ref={countryDropdownRef}>
                 <button
@@ -157,7 +159,7 @@ export default function Hero() {
                   aria-haspopup="listbox"
                   aria-expanded={isCountryOpen}
                 >
-                  <span>{country || 'Select country'}</span>
+                  <span>{country || t('form.select_country') || 'Select country'}</span>
                   <span className={styles.countryCaret} aria-hidden="true">
                     <svg
                       width="16"
@@ -200,7 +202,7 @@ export default function Hero() {
               </div>
             </div>
             <button type="submit" className={styles.submitButton}>
-              Get Early Access
+              {t('form.submit') || 'Get Early Access'}
             </button>
           </form>
       {message && (
@@ -212,9 +214,9 @@ export default function Hero() {
       {showSuccess && (
         <div className={styles.successOverlay} role="dialog" aria-modal="true" aria-labelledby="success-title">
           <div className={styles.successCard}>
-            <h2 id="success-title" className={styles.successTitle}>You&apos;re in the list</h2>
+            <h2 id="success-title" className={styles.successTitle}>{t('success.title') || "You're in the list"}</h2>
             <p className={styles.successSubtitle}>
-              Thanks for joining our early group. You’ll be one of the founding members and get access before anyone else.
+              {t('success.subtitle') || 'Thanks for joining our early group. You’ll be one of the founding members and get access before anyone else.'}
             </p>
             {registrationPosition && (
               <p className={styles.successMilestone}>
@@ -230,14 +232,14 @@ export default function Hero() {
             </div>
             {emailSent && (
               <div className={styles.emailNotification}>
-                <p>Check your email for updates. Don&apos;t see it? Check your spam folder.</p>
+                <p>{t('success.check_email') || "Check your email for updates. Don't see it? Check your spam folder."}</p>
                 <button type="button" className={styles.resendLink} onClick={handleResendEmail}>
-                  Resend email
+                  {t('success.resend') || 'Resend email'}
                 </button>
               </div>
             )}
             <button type="button" className={styles.successButton} onClick={() => setShowSuccess(false)}>
-              Continue
+              {t('success.continue') || 'Continue'}
             </button>
             <a href="mailto:info@nxtcollect.com" className={styles.successEmail}>info@nxtcollect.com</a>
           </div>

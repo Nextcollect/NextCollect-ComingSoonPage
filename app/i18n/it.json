@@ -1,0 +1,37 @@
+{
+  "hero": {
+    "title": "La piattaforma europea di fiducia per i collezionisti Lancio nel 2026",
+    "description": "Entra in contatto con collezionisti verificati in 6 paesi europei. Discuti, autentica e scopri oggetti da collezione, dai Pokémon ai vinili, dall'arte agli orologi vintage."
+  },
+  "section": {
+    "title": "Creata dai collezionisti, per i collezionisti",
+    "subtitle": "Per i collezionisti europei che danno valore alla comunità tanto quanto alle loro collezioni",
+    "paragraph": "Siamo un team di collezionisti europei che sta creando una piattaforma affidabile per i collezionisti di tutta Europa. Il nostro obiettivo è riunire professionisti e collezionisti appassionati all'interno delle loro nicchie, aree locali e comunità europee, creando un mercato affidabile, equo e trasparente, plasmato dall'esperienza e dalla conoscenza europee. La nostra missione è rendere la comunità dei collezionisti più accessibile, affidabile e realmente costruita per l'Europa. Che tu sia un esperto locale, un collezionista esperto o un'azienda in una nicchia di collezionisti, Next Collect ti aiuta a entrare in contatto con collezionisti verificati nelle vicinanze o in tutta Europa, a condividere conoscenze affidabili e a commerciare con fiducia, tutto in un unico posto."
+  },
+  "features": {
+    "f1_title": "Tutto in un unico posto",
+    "f1_description": "Niente più gruppi sparsi. Un unico punto di riferimento per i collezionisti per seguire le tendenze, incontrare altri appassionati e rimanere aggiornati sul mercato europeo.",
+    "f2_title": "Utenti verificati",
+    "f2_description": "Sappiate che state parlando con veri collezionisti. Solo membri verificati, quindi gli scambi e i consigli rimangono onesti e orientati ai collezionisti.",
+    "f3_title": "Multilingue",
+    "f3_description": "Nessuna barriera linguistica. Parlate nella vostra lingua madre con qualsiasi collezionista in Europa, poiché i messaggi vengono tradotti in tempo reale."
+  },
+  "cta": {
+    "join": "Iscriviti alla lista d'attesa",
+    "subtext": "Entra nella prima ondata che si unisce alla community ed entra come membro fondatore."
+  },
+  "form": {
+    "email_label": "Email",
+    "email_placeholder": "Inserisci il tuo indirizzo email",
+    "country_label": "Paese",
+    "select_country": "Seleziona paese",
+    "submit": "Accedi in anteprima"
+  },
+  "success": {
+    "title": "Sei nella lista",
+    "subtitle": "Grazie per esserti unito al nostro gruppo anticipato. Sarai uno dei membri fondatori e avrai accesso prima degli altri.",
+    "continue": "Continua",
+    "check_email": "Controlla la tua email per gli aggiornamenti. Non vedi niente? Controlla la cartella spam.",
+    "resend": "Reinvia email"
+  }
+}

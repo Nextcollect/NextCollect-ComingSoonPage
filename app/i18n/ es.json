@@ -1,0 +1,36 @@
+{
+  "hero": {
+    "title": "La plataforma europea de confianza para coleccionistas Lanzamiento en 2026",
+    "description": "Conecta con coleccionistas verificados de seis países europeos. Debate, autentifica y descubre objetos de colección, desde Pokémon y vinilos hasta arte y relojes vintage."
+  },
+  "section": {
+    "title": "Creada por coleccionistas, para coleccionistas",
+    "subtitle": "Para coleccionistas europeos que valoran la comunidad tanto como sus colecciones",
+    "paragraph": "Somos un equipo de coleccionistas europeos que estamos creando una plataforma de confianza para coleccionistas de toda Europa. Nuestro objetivo es reunir a profesionales y coleccionistas apasionados dentro de su nicho, áreas locales y comunidades europeas, creando un mercado de confianza, justo y transparente, moldeado por la experiencia y los conocimientos europeos. Nuestra misión es hacer que la comunidad de coleccionistas sea más accesible, fiable y verdaderamente creada para Europa. Tanto si es un experto local, un coleccionista experimentado o una empresa del nicho del coleccionismo, Next Collect le ayuda a conectar con coleccionistas verificados cercanos o de toda Europa, compartir conocimientos en los que puede confiar y comerciar con confianza, todo en un solo lugar."
+  },
+  "features": {
+    "f1_title": "Todo en un solo lugar",
+    "f1_description": "Se acabaron los grupos dispersos. Un lugar único para que los coleccionistas sigan las tendencias, conozcan a otros y se mantengan al día en todo el mercado europeo.",
+    "f2_title": "Usuarios verificados",
+    "f2_description": "Ten la seguridad de que estás hablando con coleccionistas reales. Solo miembros verificados, para que el comercio y el asesoramiento sean honestos y estén orientados a los coleccionistas.",
+    "f3_title": "Multilingüe",
+    "f3_description": "Sin barreras lingüísticas. Habla en tu idioma nativo con cualquier coleccionista de Europa, ya que los mensajes se traducen en tiempo real."
+  },
+  "cta": {
+    "join": "Únete a la lista de espera"
+  },
+  "form": {
+    "email_label": "Correo electrónico",
+    "email_placeholder": "Introduce tu correo electrónico",
+    "country_label": "País",
+    "select_country": "Selecciona país",
+    "submit": "Acceso anticipado"
+  },
+  "success": {
+    "title": "Estás en la lista",
+    "subtitle": "Gracias por unirte a nuestro grupo inicial. Serás de los primeros y tendrás acceso antes que nadie.",
+    "continue": "Continuar",
+    "check_email": "Revisa tu correo para ver actualizaciones. ¿No lo ves? Revisa la carpeta de spam.",
+    "resend": "Reenviar correo"
+  }
+}

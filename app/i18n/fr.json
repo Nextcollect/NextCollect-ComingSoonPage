@@ -1,0 +1,37 @@
+{
+  "hero": {
+    "title": "La plateforme européenne de confiance pour les collectionneurs Lancement prévu en 2026",
+    "description": "Entrez en contact avec des collectionneurs vérifiés dans 6 pays européens. Discutez, authentifiez et découvrez des objets de collection, des Pokémon aux vinyles en passant par les œuvres d'art et les montres vintage."
+  },
+  "section": {
+    "title": "Conçue par des collectionneurs, pour les collectionneurs",
+    "subtitle": "Pour les collectionneurs européens qui accordent autant d'importance à leur communauté qu'à leurs collections",
+    "paragraph": "Nous sommes une équipe de collectionneurs européens qui construisons une plateforme de confiance pour les collectionneurs à travers l'Europe. Notre objectif est de réunir des professionnels et des collectionneurs passionnés au sein de leur niche, de leur région et de leur communauté européenne, afin de créer un marché fiable, équitable et transparent, façonné par l'expertise et les connaissances européennes. Notre mission est de rendre la communauté des collectionneurs plus accessible, plus fiable et véritablement conçue pour l'Europe. Que vous soyez un expert local, un collectionneur chevronné ou une entreprise dans un créneau de collectionneurs, Next Collect vous aide à entrer en contact avec des collectionneurs vérifiés à proximité ou dans toute l'Europe, à partager des connaissances fiables et à échanger en toute confiance, le tout en un seul endroit."
+  },
+  "features": {
+    "f1_title": "Tout en un seul endroit",
+    "f1_description": "Fini les groupes dispersés. Un seul endroit où les collectionneurs peuvent suivre les tendances, rencontrer d'autres personnes et se tenir informés du marché européen.",
+    "f2_title": "Utilisateurs vérifiés",
+    "f2_description": "Vous savez que vous discutez avec de vrais collectionneurs. Seuls les membres vérifiés sont autorisés, afin que les échanges et les conseils restent honnêtes et axés sur les collectionneurs.",
+    "f3_title": "Multilingue",
+    "f3_description": "Pas de barrières linguistiques. Discutez dans votre langue maternelle avec n'importe quel collectionneur en Europe, car les messages sont traduits en temps réel."
+  },
+  "cta": {
+    "join": "Rejoindre la liste d'attente",
+    "subtext": "Faites partie de la première vague à rejoindre la communauté et devenez membre fondateur."
+  },
+  "form": {
+    "email_label": "E-mail",
+    "email_placeholder": "Entrez votre adresse e-mail",
+    "country_label": "Pays",
+    "select_country": "Sélectionnez un pays",
+    "submit": "Obtenir un accès anticipé"
+  },
+  "success": {
+    "title": "Vous êtes sur la liste",
+    "subtitle": "Merci d'avoir rejoint notre groupe d'early access. Vous serez l'un des membres fondateurs et aurez accès avant les autres.",
+    "continue": "Continuer",
+    "check_email": "Vérifiez votre e-mail pour les mises à jour. Vous ne le voyez pas ? Vérifiez votre dossier spam.",
+    "resend": "Renvoyer l'e-mail"
+  }
+}
