@@ -102,12 +102,37 @@ export default function Hero() {
       } else {
         setRegistrationPosition(data?.registration_position);
         setResendEmail(email.trim());
-        setEmailSent(true);
         setShowSuccess(true);
         setMessage('');
         setMessageType('');
         setEmail('');
         setCountry('');
+
+        try {
+          const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+          const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+          const response = await fetch(`${supabaseUrl}/functions/v1/send-confirmation-email`, {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${anonKey}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              email: email.trim(),
+              registrationPosition: data?.registration_position,
+            }),
+          });
+
+          if (response.ok) {
+            setEmailSent(true);
+          } else {
+            console.error('Email send failed:', await response.json());
+            setEmailSent(false);
+          }
+        } catch (emailErr) {
+          console.error('Error sending email:', emailErr);
+          setEmailSent(false);
+        }
       }
     } catch (err) {
       setMessage('Something went wrong. Please try again.');
@@ -115,9 +140,30 @@ export default function Hero() {
     }
   };
 
-  const handleResendEmail = () => {
-    setEmailSent(false);
-    setTimeout(() => setEmailSent(true), 500);
+  const handleResendEmail = async () => {
+    try {
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+      const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+      const response = await fetch(`${supabaseUrl}/functions/v1/send-confirmation-email`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${anonKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: resendEmail,
+          registrationPosition,
+        }),
+      });
+
+      if (response.ok) {
+        setEmailSent(true);
+      } else {
+        console.error('Resend failed:', await response.json());
+      }
+    } catch (err) {
+      console.error('Error resending email:', err);
+    }
   };
 
   return (
