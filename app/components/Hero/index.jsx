@@ -86,7 +86,7 @@ export default function Hero() {
 
     try {
       const { data, error } = await supabase
-        .from('early_access_signups')
+        .from('nextcollect_registration_records')
         .insert([{ email: email.trim(), country }])
         .select('registration_position')
         .maybeSingle();
