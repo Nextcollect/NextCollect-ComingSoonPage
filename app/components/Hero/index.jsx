@@ -38,6 +38,30 @@ export default function Hero() {
   const [resendEmail, setResendEmail] = useState('');
   const [registrationPosition, setRegistrationPosition] = useState(null);
 
+  const sendConfirmationEmail = async ({ emailAddress, position }) => {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+    if (!supabaseUrl || !anonKey) {
+      throw new Error('Supabase keys are missing');
+    }
+
+    const url = `${supabaseUrl.replace(/\/$/, '')}/functions/v1/send-confirmation-email`;
+
+    return fetch(url, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${anonKey}`,
+        'apikey': anonKey,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        email: emailAddress,
+        registrationPosition: position,
+      }),
+    });
+  };
+
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (!countryDropdownRef.current) return;
@@ -109,18 +133,9 @@ export default function Hero() {
         setCountry('');
 
         try {
-          const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-          const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-          const response = await fetch(`${supabaseUrl}/functions/v1/send-confirmation-email`, {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${anonKey}`,
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              email: email.trim(),
-              registrationPosition: data?.registration_position,
-            }),
+          const response = await sendConfirmationEmail({
+            emailAddress: email.trim(),
+            position: data?.registration_position,
           });
 
           if (response.ok) {
@@ -142,18 +157,9 @@ export default function Hero() {
 
   const handleResendEmail = async () => {
     try {
-      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-      const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-      const response = await fetch(`${supabaseUrl}/functions/v1/send-confirmation-email`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${anonKey}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email: resendEmail,
-          registrationPosition,
-        }),
+      const response = await sendConfirmationEmail({
+        emailAddress: resendEmail,
+        position: registrationPosition,
       });
 
       if (response.ok) {

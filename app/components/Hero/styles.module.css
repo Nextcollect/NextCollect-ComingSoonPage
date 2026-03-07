@@ -309,7 +309,7 @@
   letter-spacing: 0.15px;
   background: rgba(71, 15, 244, 0.08);
   padding: var(--space-2) var(--space-4);
-  border-radius: var(--radius-pill);
+  border-radius: 12px;
 }
 
 .emailNotification {
