@@ -233,7 +233,7 @@ Deno.serve(async (req: Request) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        from: "noreply@nxtcollect.com",
+        from: "matthijs.email@nxtcollect.com",
         to: email,
         subject: "Welcome to Nextcollect - You're on the Early Access List",
         html: emailBody,
