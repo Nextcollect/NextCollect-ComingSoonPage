@@ -25,13 +25,23 @@
     "email_placeholder": "Enter your email address",
     "country_label": "Country",
     "select_country": "Select country",
-    "submit": "Get Early Access"
+    "submit": "Get Early Access",
+    "submitting": "Sending…",
+    "error_fields_required": "Please fill in all fields",
+    "error_email_invalid": "Please enter a valid email address",
+    "error_email_exists": "This email is already registered",
+    "error_try_again": "There was an issue with this entry. Please try again.",
+    "error_generic": "Something went wrong. Please try again.",
+    "error_resend": "Failed to resend. Please try again."
   },
   "success": {
     "title": "You're in the list",
     "subtitle": "Thanks for joining our early group. You'll be one of the founding members and get access before anyone else.",
     "continue": "Continue",
     "check_email": "Check your email for updates. Don't see it? Check your spam folder.",
-    "resend": "Resend email"
+    "no_email": "Didn't receive a confirmation email?",
+    "resend": "Resend email",
+    "milestone_first": "You're now part of the first {threshold} helping shape the platform",
+    "milestone_number": "You're registrant #{position}"
   }
 }

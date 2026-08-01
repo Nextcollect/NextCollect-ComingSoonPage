@@ -25,13 +25,23 @@
     "email_placeholder": "Inserisci il tuo indirizzo email",
     "country_label": "Paese",
     "select_country": "Seleziona paese",
-    "submit": "Accedi in anteprima"
+    "submit": "Accedi in anteprima",
+    "submitting": "Invio in corso…",
+    "error_fields_required": "Compila tutti i campi",
+    "error_email_invalid": "Inserisci un indirizzo email valido",
+    "error_email_exists": "Questa email è già registrata",
+    "error_try_again": "Si è verificato un problema. Riprova.",
+    "error_generic": "Qualcosa è andato storto. Riprova.",
+    "error_resend": "Reinvio non riuscito. Riprova."
   },
   "success": {
     "title": "Sei nella lista",
     "subtitle": "Grazie per esserti unito al nostro gruppo anticipato. Sarai uno dei membri fondatori e avrai accesso prima degli altri.",
     "continue": "Continua",
     "check_email": "Controlla la tua email per gli aggiornamenti. Non vedi niente? Controlla la cartella spam.",
-    "resend": "Reinvia email"
+    "no_email": "Non hai ricevuto l'email di conferma?",
+    "resend": "Reinvia email",
+    "milestone_first": "Ora fai parte dei primi {threshold} che stanno dando forma alla piattaforma",
+    "milestone_number": "Sei il registrato #{position}"
   }
 }

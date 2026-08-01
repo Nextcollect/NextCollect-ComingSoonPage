@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useState, useMemo } from "react";
+import { createContext, useContext, useState, useMemo, useEffect } from "react";
 import en from "../i18n/en.json";
 import nl from "../i18n/nl.json";
 import de from "../i18n/de.json";
@@ -13,11 +13,15 @@ const translations = { en, nl, de, fr, es, it };
 const LanguageContext = createContext({
   locale: "en",
   setLocale: () => {},
-  t: (path) => path,
+  t: () => "",
 });
 
 export function LanguageProvider({ children }) {
   const [locale, setLocale] = useState("EN");
+
+  useEffect(() => {
+    document.documentElement.lang = locale.toLowerCase();
+  }, [locale]);
 
   const value = useMemo(() => {
     const code = (locale || "EN").toLowerCase();

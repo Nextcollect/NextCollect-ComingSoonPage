@@ -7,46 +7,32 @@ const SOCIAL_MEDIA_LINKS = [
   {
     id: 'instagram',
     name: 'Instagram',
-    url: 'https://instagram.com',
+    url: 'https://www.instagram.com/nextcollect',
     icon: '/img/NextCollect_Instagram_Icon.svg'
   },
   {
     id: 'facebook',
     name: 'Facebook',
-    url: 'https://facebook.com',
+    url: 'https://www.facebook.com/people/nextcollect/61582427723720/',
     icon: '/img/NextCollect_Facebook_Icon.svg'
   },
   {
     id: 'tiktok',
     name: 'TikTok',
-    url: 'https://tiktok.com',
+    url: 'https://www.tiktok.com/@nextcollect',
     icon: '/img/NextCollect_TikTok_Icon.svg'
   }
 ];
 
 export default function SocialMedia({ variant = 'default' }) {
   const isFooter = variant === 'footer';
-  const isModal = variant === 'modal';
 
-  const containerClass = [
-    styles.socialIcons,
-    isFooter ? styles.socialIconsFooter : '',
-    isModal ? styles.socialIconsModal : ''
-  ]
+  const containerClass = [styles.socialIcons, isFooter ? styles.socialIconsFooter : '']
     .filter(Boolean)
     .join(' ');
 
-  const linkClass = isFooter
-    ? styles.socialLinkFooter
-    : isModal
-      ? styles.socialLinkModal
-      : styles.socialLink;
-
-  const iconClass = isFooter
-    ? styles.socialIconFooter
-    : isModal
-      ? styles.socialIconModal
-      : styles.socialIcon;
+  const linkClass = isFooter ? styles.socialLinkFooter : styles.socialLink;
+  const iconClass = isFooter ? styles.socialIconFooter : styles.socialIcon;
 
   return (
     <div className={containerClass} aria-label="Social media links">
@@ -66,7 +52,7 @@ export default function SocialMedia({ variant = 'default' }) {
             width={16}
             height={16}
             className={iconClass}
-            priority={isFooter}
+            priority={!isFooter}
           />
         </a>
       ))}

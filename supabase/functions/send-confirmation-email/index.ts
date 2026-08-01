@@ -1,10 +1,28 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2"; // Issue #3
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Client-Info, Apikey",
-};
+const ALLOWED_ORIGINS = [
+  "https://www.nxtcollect.com",
+  "https://nxtcollect.com",
+  // Include localhost only when explicitly enabled (set ALLOW_LOCAL_ORIGIN=true in local Supabase config)
+  ...(Deno.env.get("ALLOW_LOCAL_ORIGIN") === "true" ? ["http://localhost:3000"] : []),
+];
+
+// Echo back the requesting origin when it's in the allowlist.
+// Avoids sending "Access-Control-Allow-Origin: *" which would contradict the origin allowlist.
+function getCorsHeaders(origin: string) {
+  return {
+    "Access-Control-Allow-Origin": ALLOWED_ORIGINS.includes(origin) ? origin : "",
+    "Access-Control-Allow-Methods": "POST, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Client-Info, Apikey",
+  };
+}
+
+// Admin client so RLS doesn't interfere with the existence check
+const supabase = createClient(
+  Deno.env.get("SUPABASE_URL")!,
+  Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+);
 
 interface EmailRequest {
   email: string;
@@ -12,6 +30,9 @@ interface EmailRequest {
 }
 
 Deno.serve(async (req: Request) => {
+  const origin = req.headers.get("origin") ?? "";
+  const corsHeaders = getCorsHeaders(origin);
+
   if (req.method === "OPTIONS") {
     return new Response(null, {
       status: 200,
@@ -19,10 +40,23 @@ Deno.serve(async (req: Request) => {
     });
   }
 
-  try {
-    const { email, registrationPosition }: EmailRequest = await req.json();
+  if (!ALLOWED_ORIGINS.includes(origin)) {
+    return new Response(
+      JSON.stringify({ error: "Forbidden" }),
+      { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+    );
+  }
 
-    if (!email) {
+  try {
+    // Issue #2: parse body manually so we can validate registrationPosition at runtime
+    const body = await req.json();
+    const email: string = body.email;
+    const rawPosition = body.registrationPosition;
+    // Accept only positive integers — anything else (strings, floats, objects, HTML) is treated as absent
+    const registrationPosition: number | null =
+      Number.isInteger(rawPosition) && rawPosition > 0 ? (rawPosition as number) : null;
+
+    if (!email || typeof email !== "string") {
       return new Response(
         JSON.stringify({ error: "Email is required" }),
         {
@@ -44,19 +78,37 @@ Deno.serve(async (req: Request) => {
       );
     }
 
+    // Issue #3: verify the address is actually registered — prevents sending to arbitrary emails
+    const { data: registration } = await supabase
+      .from("nextcollect_registration_records")
+      .select("id")
+      .eq("email", email)
+      .maybeSingle();
+
+    if (!registration) {
+      return new Response(
+        JSON.stringify({ error: "Email not registered" }),
+        {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
+    }
+
+    // NOTE: milestone thresholds are duplicated in app/components/Hero/index.jsx (getMilestoneText)
     const positionText = (() => {
       if (!registrationPosition) {
-        return "You’re now a Founder, which gives you priority access at launch and early updates on what we’re building.";
+        return "You're now a Founder, which gives you priority access at launch and early updates on what we're building.";
       }
 
       const milestones = [100, 500, 1000, 2000, 3000, 5000, 10000];
       for (const threshold of milestones) {
         if (registrationPosition <= threshold) {
-          return `You’re now part of the first <strong style="color:#4b2dff;">${threshold}</strong> helping shape the platform. You’re now a Founder, which gives you priority access at launch and early updates on what we’re building.`;
+          return `You're now part of the first <strong style="color:#4b2dff;">${threshold}</strong> helping shape the platform. You're now a Founder, which gives you priority access at launch and early updates on what we're building.`;
         }
       }
 
-      return `You're registrant #<strong style="color:#4b2dff;">${registrationPosition}</strong>. You’re now a Founder, which gives you priority access at launch and early updates on what we’re building.`;
+      return `You're registrant #<strong style="color:#4b2dff;">${registrationPosition}</strong>. You're now a Founder, which gives you priority access at launch and early updates on what we're building.`;
     })();
 
     const emailBody = `
@@ -78,7 +130,7 @@ Deno.serve(async (req: Request) => {
               <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
                 <tr>
                   <td align="left" valign="middle" style="padding:4px 0 6px 0;">
-                    <a href="{{aboutUrl}}" style="text-decoration:none; display:inline-block;">
+                    <a href="https://www.nxtcollect.com" style="text-decoration:none; display:inline-block;">
                       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 627.04 63.83" width="170" style="display:block; max-width:190px; height:auto; border:0; outline:none; text-decoration:none;">
                         <g fill="#4b2dff">
                           <path d="M47.14,62.21h-12.13L11.3,20.97v41.24H0V4.16h12.72l23.12,40.53V4.16h11.3v58.05Z"/>
@@ -101,21 +153,21 @@ Deno.serve(async (req: Request) => {
                     <table role="presentation" border="0" cellpadding="0" cellspacing="0">
                       <tr>
                         <td style="padding-left:18px;">
-                          <a href="{{instagramUrl}}" style="text-decoration:none;">
+                          <a href="https://www.instagram.com/nextcollect" style="text-decoration:none;">
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="14" height="14" style="display:block; border:0; outline:none; text-decoration:none;">
                               <path fill="#4b2dff" d="M4.7,0c-.9,0-1.4.2-1.9.4-.5.2-1,.5-1.4.9-.4.4-.7.9-.9,1.4-.2.5-.3,1.1-.4,1.9C0,5.6,0,5.8,0,8c0,2.2,0,2.4,0,3.3,0,.9.2,1.4.4,1.9.2.5.5,1,.9,1.4.4.4.9.7,1.4.9.5.2,1.1.3,1.9.4.9,0,1.1,0,3.3,0,2.2,0,2.4,0,3.3,0,.9,0,1.4-.2,1.9-.4.5-.2,1-.5,1.4-.9.4-.4.7-.9.9-1.4.2-.5.3-1.1.4-1.9,0-.9,0-1.1,0-3.3,0-2.2,0-2.4,0-3.3,0-.9-.2-1.4-.4-1.9-.2-.5-.5-1-.9-1.4-.4-.4-.9-.7-1.4-.9-.5-.2-1.1-.3-1.9-.4C10.4,0,10.2,0,8,0c-2.2,0-2.4,0-3.3,0ZM4.8,14.5c-.8,0-1.2-.2-1.5-.3-.3-.1-.7-.3-.9-.6-.3-.3-.5-.6-.6-.9-.1-.3-.2-.7-.3-1.5,0-.8,0-1.1,0-3.2,0-2.1,0-2.4,0-3.2,0-.8.2-1.2.3-1.5.1-.4.3-.6.6-.9.3-.3.6-.5.9-.6.3-.1.7-.2,1.5-.3.8,0,1.1,0,3.2,0,2.1,0,2.4,0,3.2,0,.8,0,1.2.2,1.5.3.4.1.6.3.9.6.3.3.5.5.6.9.1.3.2.7.3,1.5,0,.8,0,1.1,0,3.2,0,2.1,0,2.4,0,3.2,0,.8-.2,1.2-.3,1.5-.1.4-.3.6-.6.9-.3.3-.6.5-.9.6-.3.1-.7.2-1.5.3-.8,0-1.1,0-3.2,0-2.1,0-2.4,0-3.2,0ZM11.3,3.7c0,.2,0,.4.2.5.1.2.3.3.4.4.2,0,.4,0,.6,0,.2,0,.4-.1.5-.3.1-.1.2-.3.3-.5,0-.2,0-.4,0-.6,0-.2-.2-.3-.4-.4-.2-.1-.3-.2-.5-.2-.3,0-.5.1-.7.3-.2.2-.3.4-.3.7ZM3.9,8c0,1.1.4,2.1,1.2,2.9.8.8,1.8,1.2,2.9,1.2,1.1,0,2.1-.4,2.9-1.2.8-.8,1.2-1.8,1.2-2.9,0-1.1-.5-2.1-1.2-2.9-.8-.8-1.8-1.2-2.9-1.2-1.1,0-2.1.4-2.9,1.2-.8.8-1.2,1.8-1.2,2.9ZM5.3,8c0-.5.2-1,.4-1.5.3-.4.7-.8,1.2-1,.5-.2,1-.3,1.5-.2.5.1,1,.4,1.4.7.4.4.6.8.7,1.4.1.5,0,1.1-.1,1.5-.2.5-.5.9-1,1.2-.4.3-1,.5-1.5.5-.4,0-.7,0-1-.2-.3-.1-.6-.3-.9-.6-.2-.2-.4-.5-.6-.9-.1-.3-.2-.7-.2-1Z"/>
                             </svg>
                           </a>
                         </td>
                         <td style="padding-left:18px;">
-                          <a href="{{facebookUrl}}" style="text-decoration:none;">
+                          <a href="https://www.facebook.com/people/nextcollect/61582427723720/" style="text-decoration:none;">
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="14" height="14" style="display:block; border:0; outline:none; text-decoration:none;">
                               <path fill="#4b2dff" d="M6.1,15.8v-5.3h-1.6v-2.4h1.6v-1.1c0-2.7,1.2-4,3.9-4s.6,0,1,0c.3,0,.5,0,.8.1v2.2c-.1,0-.3,0-.4,0-.2,0-.3,0-.5,0-.5,0-.8,0-1.1.2-.2,0-.3.2-.5.4-.2.3-.2.7-.2,1.2v.9h2.6l-.3,1.4-.2,1h-2.2v5.5c4-.5,7-3.9,7-7.9S12.4,0,8,0,0,3.6,0,8s2.6,6.9,6.1,7.8Z"/>
                             </svg>
                           </a>
                         </td>
                         <td style="padding-left:18px;">
-                          <a href="{{tiktokUrl}}" style="text-decoration:none;">
+                          <a href="https://www.tiktok.com/@nextcollect" style="text-decoration:none;">
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="14" height="14" style="display:block; border:0; outline:none; text-decoration:none;">
                               <path fill="#4b2dff" d="M12,2.5c-.6-.7-.9-1.6-.9-2.5h-2.7v11c0,.6-.3,1.2-.7,1.6-.4.4-1,.6-1.6.6-1.3,0-2.3-1-2.3-2.3s1.5-2.7,3-2.2v-2.8c-3.1-.4-5.7,2-5.7,5s2.4,5,5,5,5-2.3,5-5v-5.6c1.1.8,2.4,1.2,3.8,1.2v-2.7s-1.7,0-2.9-1.3Z"/>
                             </svg>
@@ -134,7 +186,7 @@ Deno.serve(async (req: Request) => {
               <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color:#ffffff; border-radius:0;">
                 <tr>
                   <td style="padding:32px 0px 48px 0px;" align="center">
-                    <img src="img/Test on the list _v03.png" alt="You're on the list!" width="600" style="display:block; width:100%; max-width:600px; height:auto; border:0; outline:none; text-decoration:none;" />
+                    <img src="https://www.nxtcollect.com/img/Test_on_the_list_v03.png" alt="You're on the list!" width="600" style="display:block; width:100%; max-width:600px; height:auto; border:0; outline:none; text-decoration:none;" />
                   </td>
                 </tr>
                 <tr>
@@ -142,7 +194,7 @@ Deno.serve(async (req: Request) => {
                     <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
                       <tr>
                         <td valign="middle" width="52" style="padding-right:12px; padding-bottom: 10px;">
-                          <img src="img/Nextcollect_Welcomes_Email_Profile-Images_v03.png" alt="Team NextCollect" width="125" style="display:block; width:125px; height:auto; outline:none; text-decoration:none;" />
+                          <img src="https://www.nxtcollect.com/img/Nextcollect_Welcomes_Email_Profile-Images_v03.png" alt="Team NextCollect" width="125" style="display:block; width:125px; height:auto; outline:none; text-decoration:none;" />
                         </td>
                       </tr>
                       <tr>
@@ -161,7 +213,7 @@ Deno.serve(async (req: Request) => {
                     </p>
                     <p style="margin:0; font-family:'inter', Arial, sans-serif; font-size:17px; font-weight:400; line-height:1.7; color:#1C1B29;">
                       Thanks for joining us this early,<br /><br />
-                      Matthijs & Rens 
+                      Matthijs & Rens
                     </p>
                   </td>
                 </tr>
@@ -210,12 +262,6 @@ Deno.serve(async (req: Request) => {
               <p style="margin:0; font-family:'inter', Arial, sans-serif; font-size:13px; font-weight:400; line-height:1.5; color:#4b2dff;">
                 For questions reach at <a href="mailto:info@nxtcollect.com" style="color:#4b2dff; text-decoration:underline;">info@nxtcollect.com</a>
               </p>
-            </td>
-          </tr>
-          <!-- Hidden legacy variables to preserve data bindings -->
-          <tr>
-            <td style="font-size:0; line-height:0; padding:0; height:0; overflow:hidden; mso-hide:all; display:none;">
-              {{messageCount}} {{messagePreview}} {{time}} {{thumbsUpUrl}} {{thumbsDownUrl}} {{newsUrl}} {{careerUrl}} {{shopsUrl}} {{privacyUrl}} {{unsubscribeUrl}} {{youtubeUrl}}
             </td>
           </tr>
         </table>

@@ -12,7 +12,7 @@
   --white: #F2F0EB;
   --black: #1C1B29;
 
-  --font-family-base: "Inter", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-family-base: var(--font-inter), system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
   --font-size-base: 16px;
   --line-height-base: 1.5;
 

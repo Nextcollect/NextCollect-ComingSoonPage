@@ -1,6 +1,7 @@
- 'use client';
+'use client';
 
 import { useCallback } from 'react';
+import Image from 'next/image'; // Issue #10
 import { useLanguage } from '../../context/LanguageProvider';
 import styles from './styles.module.css';
 
@@ -19,7 +20,13 @@ export function AboutSection() {
         </p>
       </div>
       <div className={styles.imageColumn}>
-        <img src="/img/Test_header_Image.png" alt="Collectors community" />
+        <Image
+            src="/img/Test_header_Image.png"
+            alt="Collectors community"
+            width={520}
+            height={520}
+            style={{ width: '100%', height: 'auto' }}
+          />
       </div>
     </section>
   );
@@ -50,7 +57,7 @@ export function FeaturesSection() {
       <div className={styles.featuresGrid}>
         {features.map((feature, index) => (
           <div key={index} className={styles.featureCard}>
-            <img src={feature.icon} alt={feature.title} className={styles.featureIcon} />
+            <Image src={feature.icon} alt={feature.title} width={41} height={41} className={styles.featureIcon} />
             <h3 className={styles.featureTitle}>{feature.title}</h3>
             <p className={styles.featureDescription}>{feature.description}</p>
           </div>
@@ -61,12 +68,18 @@ export function FeaturesSection() {
 }
 
 export function CTASection() {
-  const { t } = useLanguage();
+  const { t, locale } = useLanguage();
   const handleScrollToHero = useCallback(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
     const emailInput = document.getElementById('early-access-email');
     if (emailInput) {
-      setTimeout(() => emailInput.focus(), 350);
+      setTimeout(() => {
+        try {
+          emailInput.focus({ preventScroll: true });
+        } catch {
+          emailInput.focus();
+        }
+      }, 200);
     }
   }, []);
 
@@ -77,7 +90,15 @@ export function CTASection() {
           {t('cta.join') || 'Join The Waitlist'}
         </button>
         <p className={styles.ctaText}>
-          {t('cta.subtext') || 'Become a part of the first wave that joins the community and became a founder member.'}
+          {(() => {
+            const COMMUNITY_WORD = { EN: 'community', NL: 'community', IT: 'community', DE: 'Community', FR: 'communauté', ES: 'comunidad' };
+            const text = t('cta.subtext') || 'Become a part of the first wave that joins the community and became a founder member.';
+            const word = COMMUNITY_WORD[locale] || 'community';
+            const parts = text.split(word);
+            return parts.length === 2
+              ? <>{parts[0]}<strong className={styles.ctaHighlight}>{word}</strong>{parts[1]}</>
+              : text;
+          })()}
         </p>
       </div>
     </section>
