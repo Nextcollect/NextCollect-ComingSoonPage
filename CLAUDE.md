@@ -31,6 +31,11 @@ wrong or over-built from the code alone, and the reasoning is not recoverable fr
    `app/components/Hero/validation.js`.
 10. **Do not commit to `main`.** Work happens on `resume-audit` or a branch cut from it.
 11. **Do not print secret values.** Variable names only, in any output or commit.
+12. **Do not act on D-009 (`.env` in git history).** It is OPEN, not decided. Do not rotate keys
+    or rewrite history until the owner decides.
+13. **Do not drop the anon RLS policies without first confirming RLS is enabled** on
+    `nextcollect_registration_records` (`SELECT relrowsecurity FROM pg_class WHERE relname='...'`).
+    If RLS is off, policies are inert and dropping them accomplishes nothing. See D-002.
 
 ---
 

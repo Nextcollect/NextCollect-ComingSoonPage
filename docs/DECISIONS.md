@@ -66,6 +66,35 @@ requires `supabase functions serve` with `ALLOW_LOCAL_ORIGIN=true`. Server-side 
 (format, length, `country ∈ EUROPEAN_COUNTRIES`) now lives in the edge function and must be
 implemented there — dropping the INSERT policy removes the database-level check entirely.
 
+### ⚠ Load-bearing assumption — VERIFY BEFORE IMPLEMENTING
+
+**This decision assumes Row Level Security is actually ENABLED on
+`nextcollect_registration_records`. If it is not, dropping the policies accomplishes nothing** —
+policies are inert when RLS is off, and `anon` retains whatever table-level grants exist. The
+entire fix rests on this.
+
+Migration `20260107141200_20260107_migrate_to_registration_records.sql:39` does contain
+`ALTER TABLE ... ENABLE ROW LEVEL SECURITY`, so RLS *should* be on — but that is an inference
+about **live remote state** from a migration file. It does not prove the migration was applied,
+nor that RLS was not toggled off afterwards via the dashboard. **Verify first:**
+
+```sql
+SELECT relrowsecurity FROM pg_class
+WHERE relname = 'nextcollect_registration_records';   -- must be true
+```
+
+**Recommendation (NOT yet decided — owner will confirm against live state):** additionally issue
+
+```sql
+REVOKE ALL ON nextcollect_registration_records FROM anon;
+```
+
+as defence-in-depth, so the table is inaccessible to the anon role **regardless of RLS state**.
+This is safe under D-002 because the edge function connects with the service role, which holds its
+own grants and bypasses RLS — revoking `anon` does not affect it. No migration in this repository
+issues any `GRANT`/`REVOKE`, so `anon`'s current access comes entirely from Supabase's stock
+defaults.
+
 ---
 
 ## D-003 — Rate limiting uses a Postgres table; in-memory counters are not viable
@@ -223,6 +252,39 @@ Stored outside the repository.
 
 **Note.** Commit `8ee91f0` is the code rollback point. **Code rollback does not undo database
 changes** — which is exactly why the export is separate and mandatory.
+
+---
+
+## D-009 — `.env` committed to git history — **OPEN, NOT DECIDED**
+
+**Status: OPEN — awaiting owner decision.**
+**The executing model must NOT act on this item.** Do not rotate keys, do not rewrite history,
+do not "clean up" the historical blobs. Leave it entirely until the owner decides. It is recorded
+here precisely because undecided items are what get silently dropped in a handoff.
+
+**What is in history.** `.env` was committed and removed twice — added at `3f6e53e` ("Start
+repository"), deleted at `dfbbb52`, re-added at `1b79a34`, deleted again at `818e015`. The blobs
+remain reachable in history. Variable names present: `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`,
+`NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`. The `VITE_*` pair is dead residue from
+an earlier scaffold. **`RESEND_API_KEY` was never committed.** The current `.env` is correctly
+gitignored and untracked.
+
+**Why the blast radius is limited.** These are **anon/public** Supabase keys, not service-role keys.
+The anon key is designed to ship in the browser bundle — it is public by definition and was never a
+security boundary. **The exploitable part was the `USING (true)` RLS policy, not the key's presence
+in history.** Fixing RLS (D-001/D-002) is the actual fix; rotating the key without fixing RLS would
+accomplish nothing.
+
+**Options.**
+1. **Rotate the anon key** — cheap and clean. Requires updating the Vercel env var and local `.env`.
+   Mainly hygiene, since D-002 removes anon's access to the table anyway.
+2. **Accept and document** — defensible given the limited blast radius, provided D-001/D-002 land.
+3. **Rewrite history** — only if the owner wants the `VITE_*` residue and old blobs gone entirely.
+   Disruptive (forced pushes, invalidated clones); not warranted by the risk alone.
+
+**Related hygiene, also not yet decided:** `.gitignore` covers `.env`, `.env.local` and
+`.env.*.local`, but **not** `.env.example`, `.env.production` or `.env.development` — a future
+`.env.production` would be committed silently. Consider `.env*` with `!.env.example`.
 
 ---
 
