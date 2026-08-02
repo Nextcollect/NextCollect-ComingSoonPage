@@ -399,6 +399,32 @@ Supabase REST insert, originating in a Vercel static asset built five months ear
 function deploy cannot modify a Vercel bundle. **Do not roll back C0** — rolling back would
 reintroduce the open relay without fixing anything.
 
+### Dead-project sweep (2026-08-02) — where the contamination reaches
+
+Checked: repo source, git history, Vercel env, Resend, Supabase secrets, DNS.
+
+- **Three** Supabase project refs have existed. Two are **NXDOMAIN (deleted, unrecoverable —
+  a *paused* Supabase project still resolves; these do not):**
+  | Ref | Held by | DNS |
+  |---|---|---|
+  | `0ec90b57d6e95fcbda19832f` | `VITE_SUPABASE_URL` (Bolt era) | NXDOMAIN |
+  | `uvlprdktzayskmcwxcye` | `NEXT_PUBLIC_SUPABASE_URL` (still in Vercel) | NXDOMAIN |
+  | `nofzyhxjpsikdhbcpfuo` | local `.env`, live project | **resolves** |
+- **Repo source is clean** — no hardcoded ref anywhere in `app/` or `supabase/`; `VITE_*` appears
+  only as env residue, never read by code. The edge function uses platform-injected `SUPABASE_URL`.
+- **Resend is clean and unaffected** — 0 webhooks, 1 API key (created 2026-03-10). Resend is scoped
+  to the *domain*, not to a Supabase project, so there is no cross-contamination. SPF/DKIM live on
+  `nxtcollect.com` DNS, independent of Supabase.
+- **Contamination is confined to exactly two places: the five Vercel env vars, and the `.env` blobs
+  in git history.** Nothing else points at a dead project.
+
+**Consequence for D-009 — the decision was right, and now for a stronger reason.** The anon keys in
+git history belong to the **dead** projects (sha1 `d9a6baabad28`, `e325181f1e41`) and do **not**
+match the live project's key (`11fa2c4f3fa5`). **There is nothing to rotate — those credentials
+authenticate against projects that no longer exist.** "Do not rotate" moves from *defensible* to
+*obviously correct*. Making the repo private remains worthwhile for schema/endpoint discovery, but
+its urgency drops further.
+
 ### ⚠ Sequencing consequence — read before fixing the URL
 
 **The C2 read leak is currently inert in production** because the public bundle points at a
@@ -413,6 +439,31 @@ self-inflicted regression.
 **Also note:** `NEXT_PUBLIC_*` values are **inlined at build time**. Changing the Vercel
 environment variable alone does nothing — the project must be **redeployed/rebuilt** for the new
 value to reach the bundle.
+
+### Confidence: what is airtight and what is not
+
+**Airtight — production is broken now and has been since at least 2026-03-10:**
+the live bundle was scraped directly and carries `uvlprdktzayskmcwxcye`, which returns NXDOMAIN.
+This is direct evidence, not inference.
+
+**Strongly supported but NOT airtight — "it has *never* worked":**
+- Supporting: all five Vercel env vars show the same 148-day age (≈2026-03-07); all three known
+  deployments (2026-03-07, 2026-03-10 ×2) postdate that; zero edge-function invocations; no signup
+  API traffic.
+- **Loose threads, stated honestly:**
+  1. The position sequence stands at **6** while only **1** row exists — five sequence values were
+     consumed by inserts that were later deleted or failed. Some signup activity is unaccounted for.
+  2. **4 Resend emails but only 1 matching row.** The 2026-03-10 and 2026-03-12 sends have no
+     surviving row. Both are explainable — the *then-deployed* function had no registered-email
+     check, so it would email anyone, and local dev used the correct `.env` — but neither is proven.
+  3. Deployments **older than 2026-03-07 were not enumerated** (the Vercel MCP token expired
+     mid-check).
+  4. The "148d" figure is read as creation age; if Vercel reports last-*updated*, an earlier correct
+     value cannot be excluded from this data alone.
+
+**To close it:** re-authorise the Vercel MCP, list deployments before 2026-03-07, and check the env
+vars' actual `updatedAt`. Until then, state it as *"broken since at least 2026-03-10, most likely
+from the start."*
 
 ---
 

@@ -10,6 +10,25 @@
 > Branch `resume-audit`. Rollback point: commit `8ee91f0`.
 > Decisions and rejected alternatives: [`DECISIONS.md`](DECISIONS.md). Guardrails: [`../CLAUDE.md`](../CLAUDE.md).
 
+## ⚠ READ THIS FIRST — what this project actually is
+
+**This is not a dormant site that needs a security audit. It is a site that has never worked in
+production.**
+
+The signup form — the only function this site has — has been failing for every real visitor since
+at least 2026-03-10, because the deployed JavaScript points at a Supabase project that no longer
+exists (D-012). Every signup attempt dies at DNS and shows the user a generic "There was an issue
+with this entry." The audit's security findings are real and worth fixing, but they describe a
+**machine that was never switched on**.
+
+**This changes what "done" means.** Done is not "the security findings are closed." Done is **a
+visitor can sign up and receive a confirmation email**, with the security work landed *before* that
+path goes live. Order matters more than completeness here: the site must not be brought back up
+until the read leak is closed, because right now it is broken-but-not-leaking and the naive fix
+would make it working-and-leaking.
+
+Read `DECISIONS.md` D-012 before touching anything, then the sequence in "C-ENV" below.
+
 ## Context
 
 A Next.js 14 (App Router, JSX, CSS Modules) coming-soon page: a 6-language email-capture form
@@ -359,6 +378,32 @@ issue — a five-month outage.
 > with** the env fix — otherwise the site goes from "broken but not leaking" to "working and
 > leaking" in one step.
 
+### The outage is a free maintenance window — use it
+
+Because production is already down, **all the DB work can be done with zero user impact and zero
+exposure**. There is no need to rush a partial fix. Recommended sequence:
+
+| # | Step | Why here |
+|---|---|---|
+| 1 | **C-OPS baseline** (Option B) — dump, review, one baseline migration, mark applied, archive the six | Do it while nothing is live. Makes C2 a *tracked* migration instead of ad-hoc SQL |
+| 2 | **C2 migration on top:** `DROP POLICY` ×2 + `REVOKE ALL … FROM anon, authenticated` | Leak closed while the site is still dark |
+| 3 | **Deploy the edge function** with the insert + position relocated (D-002) | Restores the position feature that dropping the SELECT policy removes |
+| 4 | **Verify with the anon key:** `select=*` → permission denied / 0 rows; insert via anon → denied | Prove it's closed *before* going live |
+| 5 | **Fix Vercel env vars + REDEPLOY** (`NEXT_PUBLIC_*` is inlined at build time) | Site comes back up **already secured** |
+| 6 | **End-to-end signup test on `https://www.nxtcollect.com`** | Confirm the thing actually works — the real definition of done |
+
+**Zero leaking window**, because the site stays dark until step 5.
+
+**Does C-OPS have to be first?** Strictly, no — steps 2's `DROP POLICY`/`REVOKE` are two statements
+that could be run as raw SQL. But there is no time pressure (the site is already down), and doing
+C-OPS first is the entire point of C-OPS: C2 then lands as a proper tracked migration rather than
+another undocumented hand-edit, which is the exact habit that produced this mess.
+
+**Fast path, if the site must go live sooner:** run `DROP POLICY … FOR SELECT` + `REVOKE` as raw
+SQL, fix Vercel, redeploy. The form works and nothing leaks, but the "you're #N" milestone
+degrades to generic copy (the client's `.select()` returns null) until step 3 lands. Acceptable
+temporarily; do **not** let it become permanent, and record it if taken.
+
 ---
 
 ## Priority order (revised 2026-08-02)
@@ -376,6 +421,30 @@ issue — a five-month outage.
 
 **Must-fix before production:** C-ENV · C2 · C-OPS · C3 · D1–D5 · E1 · E2 · E5 · G1–G4 · I.
 **Nice-to-have:** C1/C5 (trivial) · E3 · E4 · E6 · F (except F6) · G5–G11.
+
+### C6 — NEW. Silent-failure sweep: why a five-month outage went unnoticed
+
+The outage was invisible because **every database error renders the same generic sentence**:
+`'There was an issue with this entry. Please try again.'` (`Hero/index.jsx:177-178`). A DNS
+failure, an RLS denial, a network error and a schema error are indistinguishable to both the user
+and the owner. **That message is the reason nobody noticed for five months** — fixing it is not
+polish, it is outage detection.
+
+Other paths that fail silently (found while sweeping for more of the same):
+
+| Path | Failure mode | Fix |
+|---|---|---|
+| **Email send after a successful insert** | Success modal opens **before** the send is attempted (`Hero:183` → `:190`); failure only `console.error`s. User sees "you're in", no email ever arrives | **C4 client half — still open.** More urgent post-C-ENV |
+| Signup from a `*.vercel.app` URL | Insert succeeds, edge function 403s (origin not allowlisted) → silent no-email | Expected by design; document, and surface the failure per above |
+| `registration_position` unavailable | If the SELECT policy is dropped without relocating the read, `data` is null → milestone silently disappears | Exactly why D-002 relocates the insert rather than only dropping the policy |
+| `og-image.png` 404 | Broken link previews, no error surfaced anywhere | E1 |
+| `favicon.ico` 404 | Cosmetic, silent | E1 |
+| dotlottie from `unpkg.com` (`layout.jsx:49`) | Third-party CDN blocked/down → animation silently absent | F3, or drop the CDN dependency |
+
+**Action:** distinguish user-facing error classes — "that email is already registered" (a real
+answer) vs "we couldn't reach the service, try again" (an outage) — and surface email-send failure
+instead of swallowing it. Add to C4/E3. Effort S. **Impact: high — this is the difference between
+a future outage being noticed in minutes versus months.**
 
 ### Minor console noise (recorded, not urgent)
 - `/favicon.ico` → 404. `layout.jsx:38-41` points `icons` at an SVG; no `favicon.ico`, no

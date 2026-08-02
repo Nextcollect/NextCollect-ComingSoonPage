@@ -63,6 +63,14 @@ wrong or over-built from the code alone, and the reasoning is not recoverable fr
 
 ---
 
+## ⚠ The most important fact about this project
+
+**It has never worked in production.** The deployed bundle points at a deleted Supabase project, so
+every real signup has failed at DNS since ~2026-03-10 and shows a generic error. See D-012 and
+`docs/PLAN.md` → "C-ENV". "Done" means **a visitor can sign up and get a confirmation email**, not
+"the security findings are closed" — and the security work must land *before* the site is brought
+back up, because it is currently broken-but-not-leaking.
+
 ## What this project is
 
 A single-page, six-language "coming soon" email-capture site.
