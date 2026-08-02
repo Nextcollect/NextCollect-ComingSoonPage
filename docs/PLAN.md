@@ -406,16 +406,58 @@ temporarily; do **not** let it become permanent, and record it if taken.
 
 ---
 
-## Priority order (revised 2026-08-02)
+## LAUNCH LIST — FROZEN 2026-08-02. Scope is closed.
 
-1. **C-ENV** — production points at a dead project; signup has never worked *(gated on C2)*
-2. **C2** — close the read leak + `REVOKE` from anon/authenticated *(must precede C-ENV)*
-3. **C-OPS** — baseline the migration ledger (blocks all migration-based DB work)
-4. **C3** — rate limiting
-5. **D1–D4** — GDPR launch conditions
-6. **I** — Next 16 / React 19 (EOL framework)
-7. **E** correctness → **G1–G4** a11y → **F** cleanup → **G7–G11** coherence
-8. **C1** (delete file), **C5** (reconcile migration) — trivial, fold in anywhere
+The site stays dark through step 7, so every step below has **zero user impact**. Go-live is
+step 8 and nothing is added before it.
+
+| # | Step | Notes |
+|---|---|---|
+| 1 | **C-OPS baseline + C2 migration** | Baseline written; C2 drafted. Includes the `REVOKE`, dropping the sequence for honest positions, and the redundant-index cleanup |
+| 2 | **D-002 edge-function relocation** | Insert + position move server-side; `count(*)+1` for a gapless number |
+| 3 | **Build-time guard** | Pin the expected project ref + cross-check the anon key's `ref` claim. ~10 lines, hermetic |
+| 4 | **C6 minimal** | Two error branches (unreachable vs invalid input) + stop swallowing send failure |
+| 5 | **GDPR** | Privacy policy, consent, unsubscribe, deletion path — all six languages |
+| 6 | **Sender address + brand capitalisation** | `matthijs.email@` → a brand sender; `Nextcollect`/`NEXTCOLLECT` → `NextCollect` |
+| 7 | **Next 16 + React 19** | Own branch, full regression. **See the tripwire below** |
+| 8 | **Vercel env fix + fresh build + GO LIVE** | Production env, redeploy, end-to-end signup test on `www.nxtcollect.com` |
+
+### Step 7 — why it is here, and when to abandon it
+
+**The reason is EOL, not the July 2026 CVEs.** Exposure to those is near-zero for this app,
+verified 2026-08-02: **no middleware** (so the middleware/proxy-bypass class has no attack
+surface), no API routes, no route handlers, no server actions, no dynamic route segments. The
+DoS-via-CPU class needs a server-side path processing attacker input; there isn't one.
+
+The actual risk is that Next 14 will **never receive another patch** — every *future* CVE is
+permanently unfixed. The migration surface here is tiny (zero hits on every React 19 breaking
+change; Next 15's async request APIs entirely unused; 6 Next imports across 5 files), and the site
+is already dark. Cheap work, free window, unbounded future exposure → do it now.
+
+> **TRIPWIRE:** because this is *not* security-urgent, it must not block go-live. If step 7 is not
+> cleanly done and regression-passed within the intended window, **ship on Next 14** and migrate in
+> a scheduled dark window afterwards. A working site on an EOL framework beats a dark site on a
+> supported one.
+
+**Most likely breakage:** `Section/index.jsx:60` routes an **SVG through `next/image`** with no
+`images` config and no `dangerouslyAllowSVG`. Next 16 tightened image defaults. Check this first.
+
+### Validate step 7 without coupling it to go-live
+
+Fix the **Preview** env vars first (previews are SSO-protected — zero exposure), deploy the
+migration branch to a preview, and validate against the live Supabase project. Then do Production
+env + promote. This keeps "did React 19 break it?" separable from "did the env fix break it?", and
+stops step 8 being two large changes at once.
+
+### Deferred to after go-live (explicitly not launch blockers)
+
+**C3** rate limiting · **E** correctness (E1 og-image/favicon, E2 locale persistence, E3, E4, E6) ·
+**G1–G4** a11y · **F** cleanup · **G7–G11** design coherence · **C1** (delete the count_estimate
+file) · **C5** (reconcile the archived migration).
+
+*C3 note:* deferring rate limiting is a real trade-off. It is safe only because the edge function
+now rejects unregistered addresses (C0, verified) — the open-relay vector is closed. Volume abuse
+remains possible; revisit immediately after launch.
 
 **DONE:** ~~C0~~ (hardened edge function deployed 2026-08-02) · ~~C4~~ (folded into the same deploy).
 

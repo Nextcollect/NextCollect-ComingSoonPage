@@ -177,6 +177,36 @@ targets require React 19, so migration cost is identical; pick the one with runw
 `app/components/Hero/index.jsx` (submit-handler region) — a real but small overlap once ordered.
 Security work and a framework migration must never share a change set.
 
+### AMENDED 2026-08-02 — moved INTO the launch list, and the justification corrected
+
+**Moved to the last step before go-live** (owner). The site is dark (D-012), which is the cheapest
+window this migration will ever get: a React 19 regression costs nothing now and costs real signups
+after launch.
+
+**The stated justification was corrected.** Exposure to the July 2026 CVEs is **near-zero for this
+specific app**, verified by inspection: **no middleware** (so the middleware/proxy-bypass class has
+no attack surface at all), no API routes, no route handlers, no server actions, no dynamic route
+segments. `app/` is a single statically-renderable page with client-side Supabase calls and no
+auth. The DoS-via-CPU class requires a server-side path processing attacker-controlled input, and
+none exists. *(Caveat: this reasons from the release summary, not per-CVE detail. The middleware
+conclusion is solid; the DoS one is high-confidence inference.)*
+
+**So the reason to upgrade is EOL, not those CVEs.** Next 14 will never receive another patch —
+the risk is every *future* vulnerability, permanently unfixed.
+
+**Migration size, measured:** zero occurrences of every classic React 19 breaking change
+(`propTypes`, `defaultProps`, `ReactDOM.render`, `findDOMNode`, `forwardRef`, string refs, legacy
+context). Next 15's headline change — async `cookies`/`headers`/`params`/`searchParams` — is
+entirely unused. The client boundary is already correct. Migration-sensitive surface: 6 `next/*`
+imports across 5 files. **Most likely breakage:** `Section/index.jsx:60` sends an **SVG through
+`next/image`** with no `images` config and no `dangerouslyAllowSVG`; Next 16 tightened image
+defaults.
+
+**TRIPWIRE (consequence of the corrected justification).** Because this is not security-urgent, it
+**must not block go-live**. If it is not cleanly done and regression-passed within the intended
+window, ship on Next 14 and migrate in a scheduled dark window afterwards. A working site on an EOL
+framework beats a dark site on a supported one.
+
 ---
 
 ## D-005 — GDPR affordances are launch conditions, not polish
