@@ -464,6 +464,24 @@ remains possible; revisit immediately after launch.
 **Must-fix before production:** C-ENV · C2 · C-OPS · C3 · D1–D5 · E1 · E2 · E5 · G1–G4 · I.
 **Nice-to-have:** C1/C5 (trivial) · E3 · E4 · E6 · F (except F6) · G5–G11.
 
+### WATCH AT LAUNCH — sender domain reputation
+
+`nxtcollect.com` has a poor ratio on almost no volume. As of 2026-08-02, **7 sends total**:
+
+| Outcome | Count | Source |
+|---|---|---|
+| Delivered | 3 | owner testing, March |
+| **Complained** (marked spam) | 1 | owner testing, 2026-03-10 — see D-011 |
+| **Hard bounce** (`@example.invalid`) | 3 | audit verification, 2026-08-02 — avoidable, see CLAUDE.md guardrail 15 |
+
+Roughly **57% of all mail this domain has ever sent was a bounce or a complaint.** At this volume
+mailbox providers have almost no positive signal to weigh against it.
+
+**Watch after go-live:** check Resend logs after the first 5–10 real signups. If those also bounce
+or land in spam, stop and investigate *before* volume compounds — a reputation deficit is far
+cheaper to fix at 10 sends than at 500. Contributing fixes already in the plan: `List-Unsubscribe`
+(D3), a plain-text alternative, and correcting the personal-looking sender address (step 6).
+
 ### OPEN — position ordinals can be REUSED once GDPR deletion exists
 
 Raised by the owner 2026-08-02. **It is a real problem, and it is not solved.**
