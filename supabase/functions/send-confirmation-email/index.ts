@@ -31,6 +31,22 @@ const supabase = createClient(
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const MAX_EMAIL_LENGTH = 254; // RFC 5321
 
+// D3: one-click unsubscribe. The token is an HMAC of the address — never the address
+// alone, which would let anyone unsubscribe anyone and would leak membership.
+const enc = new TextEncoder();
+async function unsubscribeUrl(email: string): Promise<string | null> {
+  const secret = Deno.env.get("UNSUBSCRIBE_SECRET");
+  const base = Deno.env.get("SUPABASE_URL");
+  if (!secret || !base) return null;
+  const key = await crypto.subtle.importKey(
+    "raw", enc.encode(secret), { name: "HMAC", hash: "SHA-256" }, false, ["sign"],
+  );
+  const sig = await crypto.subtle.sign("HMAC", key, enc.encode(email.toLowerCase()));
+  const token = [...new Uint8Array(sig)].map((b) => b.toString(16).padStart(2, "0")).join("");
+  const e = btoa(email).replace(/\+/g, "-").replace(/\//g, "_");
+  return `${base}/functions/v1/unsubscribe?e=${encodeURIComponent(e)}&t=${token}`;
+}
+
 // NOTE: duplicated from app/components/Hero/index.jsx (EUROPEAN_COUNTRIES).
 // Change one, change the other — same class of duplication as the milestone
 // thresholds below. Server-side validation is required because dropping the anon
@@ -165,7 +181,7 @@ Deno.serve(async (req: Request) => {
       // used only to build the email — it is never returned to the caller.
       const { data: existing, error: lookupError } = await supabase
         .from("nextcollect_registration_records")
-        .select("registration_position")
+        .select("registration_position, unsubscribed_at")
         .eq("email", email)
         .maybeSingle();
 
@@ -190,8 +206,23 @@ Deno.serve(async (req: Request) => {
         );
       }
 
+      // Honour an opt-out. Resending to someone who unsubscribed is the fastest route to
+      // a spam complaint, which this domain cannot afford. Same wording as "not
+      // registered" so the response does not reveal opt-out status.
+      if (existing.unsubscribed_at) {
+        return new Response(
+          JSON.stringify({ error: "Email not registered" }),
+          {
+            status: 400,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          }
+        );
+      }
+
       registrationPosition = existing.registration_position ?? null;
     }
+
+    const unsubUrl = await unsubscribeUrl(email);
 
     // Plain-text alternative. Sending HTML-only is a deliverability penalty and unreadable
     // in text-only clients — and this domain cannot afford deliverability penalties
@@ -223,6 +254,7 @@ Deno.serve(async (req: Request) => {
       "---",
       "You are receiving this email because you registered at https://www.nxtcollect.com",
       "Questions: info@nxtcollect.com",
+      ...(unsubUrl ? ["", `Unsubscribe: ${unsubUrl}`] : []),
     ].join("\n");
 
     // NOTE: milestone thresholds are duplicated in app/components/Hero/index.jsx (getMilestoneText)
@@ -392,6 +424,9 @@ Deno.serve(async (req: Request) => {
               <p style="margin:0; font-family:'inter', Arial, sans-serif; font-size:13px; font-weight:400; line-height:1.5; color:#4b2dff;">
                 For questions reach at <a href="mailto:info@nxtcollect.com" style="color:#4b2dff; text-decoration:underline;">info@nxtcollect.com</a>
               </p>
+              ${unsubUrl ? `<p style="margin:8px 0 0 0; font-family:'inter', Arial, sans-serif; font-size:13px; font-weight:400; line-height:1.5; color:#4b2dff;">
+                <a href="${unsubUrl}" style="color:#4b2dff; text-decoration:underline;">Unsubscribe</a>
+              </p>` : ""}
             </td>
           </tr>
         </table>
@@ -414,6 +449,17 @@ Deno.serve(async (req: Request) => {
         subject: "Welcome to NextCollect — You're on the Early Access List",
         html: emailBody,
         text: emailText,
+        // RFC 8058 one-click unsubscribe. Gmail and Yahoo require this for bulk senders,
+        // and it materially reduces spam complaints by giving a one-tap alternative to
+        // the spam button — which matters given this domain's complaint history.
+        ...(unsubUrl
+          ? {
+              headers: {
+                "List-Unsubscribe": `<${unsubUrl}>`,
+                "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
+              },
+            }
+          : {}),
       }),
     });
 
