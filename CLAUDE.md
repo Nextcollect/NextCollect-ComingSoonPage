@@ -48,6 +48,14 @@ wrong or over-built from the code alone, and the reasoning is not recoverable fr
 15. **Resend MCP: do not send any email** — not a test, not to the owner's own address. Do not
     create or modify contacts, broadcasts, templates, automations, webhooks or API keys. Domains
     and logs are read-only reference. **Ask first** if a send ever seems genuinely necessary.
+    **This includes indirect sends.** Calling the `send-confirmation-email` edge function with a
+    valid origin and a new address **sends a real email** — the signup path always reaches Resend.
+    Do not assume an address is safe because its domain looks fake: on 2026-08-02 three test
+    signups to `@example.invalid` were **accepted and sent** by Resend, producing three hard
+    bounces on a domain with almost no positive sending history. Reserved TLDs are not a
+    substitute for asking. Everything except the successful-signup path (origin rejection,
+    invalid email, invalid country, duplicate 409, resend-to-unregistered) returns **before**
+    Resend is called and is safe to test freely.
 16. **Resend request logs contain subscriber emails.** Summarise them; never paste raw log bodies
     into a document or commit, and redact addresses in any output.
 17. **Vercel MCP is read-only. Do not deploy.**

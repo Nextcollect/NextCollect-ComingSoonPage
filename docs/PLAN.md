@@ -464,6 +464,31 @@ remains possible; revisit immediately after launch.
 **Must-fix before production:** C-ENV · C2 · C-OPS · C3 · D1–D5 · E1 · E2 · E5 · G1–G4 · I.
 **Nice-to-have:** C1/C5 (trivial) · E3 · E4 · E6 · F (except F6) · G5–G11.
 
+### OPEN — position ordinals can be REUSED once GDPR deletion exists
+
+Raised by the owner 2026-08-02. **It is a real problem, and it is not solved.**
+
+The edge function computes `registration_position` as `count(*) + 1`. That is exact today,
+but D4 (the GDPR deletion path) will make deletions possible, and `count(*)` **decreases**:
+
+```
+positions 1,2,3 issued  →  #2 requests erasure  →  count = 2
+next signup gets 3      →  a number #3 already received in their email
+```
+
+**Severity: low today, higher later.** Nobody can see anyone else's number and positions are
+not displayed publicly, so duplicates are invisible in normal use. But the confirmation email
+promises **"priority access at launch"** — if position ever determines actual ordering, duplicate
+ordinals stop being cosmetic.
+
+**Fix (one word, deliberately not applied yet):** use `COALESCE(MAX(registration_position), 0) + 1`
+instead of `count(*) + 1`. Same cost, and monotonic unless the highest row is deleted. A dedicated
+single-row counter that only ever increments would be fully correct, but is more machinery than a
+waitlist warrants.
+
+**Land it with D4**, since that is when deletions become possible. Do not ship a deletion path
+while the ordinal is still count-based.
+
 ### C6 — NEW. Silent-failure sweep: why a five-month outage went unnoticed
 
 The outage was invisible because **every database error renders the same generic sentence**:
