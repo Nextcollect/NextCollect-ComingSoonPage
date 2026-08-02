@@ -161,6 +161,58 @@ seven majors that would undo this entire step.
 
 ## Step 8 — go-live (owner runs)
 
+### Three things that will bite you if the order is wrong
+
+1. **The build-time guard fails any Vercel build until that environment's vars are fixed.**
+   `scripts/check-env.mjs` pins `EXPECTED_REF = nofzyhxjpsikdhbcpfuo`. Deploying to Preview before
+   fixing the Preview env produces a *failed build*, not a broken site. Working as designed — but
+   fix env **before** deploying, every time.
+2. **Signup cannot be tested on a Preview URL.** The edge function allowlist is
+   `nxtcollect.com` / `www.nxtcollect.com` only, so a `*.vercel.app` origin gets **403**. Under
+   D-002 the edge function *is* the signup path, so the whole form fails there — not just the
+   email. **Test signup locally instead** (see below); use Preview only to prove it builds and
+   renders on Vercel.
+3. **A plain redeploy may not pick up new env values.** `NEXT_PUBLIC_*` is inlined at *compile*
+   time, so the compile must genuinely re-run.
+
+### Validation order
+
+**A. Test the upgrade locally against the real backend — this is the real end-to-end test.**
+```bash
+supabase secrets set ALLOW_LOCAL_ORIGIN=true      # temporarily allowlists http://localhost:3000
+supabase functions deploy send-confirmation-email # required: the allowlist is evaluated at boot
+git switch next16-upgrade
+npm ci && npm run build && npm start              # real production build, real Supabase, real Resend
+```
+Sign up at `http://localhost:3000` with a **real address you control**. Then:
+```bash
+supabase secrets set ALLOW_LOCAL_ORIGIN=false     # REVERT — do not leave prod accepting localhost
+supabase functions deploy send-confirmation-email
+```
+
+**B. Preview deploy — build verification only, no signup test.**
+Fix **Preview** env vars first, then deploy `next16-upgrade`. Expect the form to 403 on submit;
+that is correct behaviour, not a regression.
+
+**C. Go-live.** Merge → fix **Production** env → fresh build → test on the real domain.
+
+**Deploy `next16-upgrade`, not `resume-audit`** — verified: `next16-upgrade` is a strict superset
+(one extra commit, nothing missing), so it carries all the deployed backend work too.
+
+**Leave Production env vars until step C.** Fixing them early is harmless *only* while no rebuild
+happens — but any push to `main` auto-deploys, which would silently take the new backend live
+before validation.
+
+### Forcing a genuinely fresh build
+
+Either:
+- **Push a commit** — always produces a clean build. Most reliable.
+- Vercel → Deployments → ⋯ → **Redeploy**, and **uncheck "Use existing Build Cache"**.
+
+Do not assume a cached redeploy re-inlines `NEXT_PUBLIC_*`.
+
+---
+
 **Order matters. Do not do this before steps 5a–7 are done.**
 
 1. Vercel → Settings → Environment Variables: set `NEXT_PUBLIC_SUPABASE_URL` and
