@@ -31,6 +31,7 @@
     "error_email_invalid": "Voer een geldig e-mailadres in",
     "error_email_exists": "Dit e-mailadres is al geregistreerd",
     "error_try_again": "Er was een probleem met dit formulier. Probeer het opnieuw.",
+    "error_unavailable": "We konden de aanmeldservice niet bereiken. Probeer het zo meteen opnieuw.",
     "error_generic": "Er is iets misgegaan. Probeer het opnieuw.",
     "error_resend": "Opnieuw verzenden mislukt. Probeer het opnieuw."
   },

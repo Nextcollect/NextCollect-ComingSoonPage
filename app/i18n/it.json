@@ -31,6 +31,7 @@
     "error_email_invalid": "Inserisci un indirizzo email valido",
     "error_email_exists": "Questa email è già registrata",
     "error_try_again": "Si è verificato un problema. Riprova.",
+    "error_unavailable": "Non siamo riusciti a contattare il servizio di iscrizione. Riprova tra un momento.",
     "error_generic": "Qualcosa è andato storto. Riprova.",
     "error_resend": "Reinvio non riuscito. Riprova."
   },

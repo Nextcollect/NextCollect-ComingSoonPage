@@ -3,7 +3,6 @@
 import { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import styles from './styles.module.css';
-import { supabase } from './supabase';
 import { validateEmail } from './validation';
 import SocialMedia from '../SocialMedia';
 import { useLanguage } from '../../context/LanguageProvider';
@@ -46,7 +45,10 @@ export default function Hero() {
   const [resendError, setResendError] = useState('');
   const [registrationPosition, setRegistrationPosition] = useState(null);
 
-  const sendConfirmationEmail = async ({ emailAddress, position }) => {
+  // D-002: the edge function is the only path that writes the table. The anon key has no
+  // database access at all, so there is no client-side insert any more — signup and resend
+  // are both a single call to this function.
+  const callSignupFunction = async (payload) => {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
@@ -63,10 +65,7 @@ export default function Hero() {
         'apikey': anonKey,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        email: emailAddress,
-        registrationPosition: position,
-      }),
+      body: JSON.stringify(payload),
     });
   };
 
@@ -143,12 +142,6 @@ export default function Hero() {
     setMessage('');
     setMessageType('');
 
-    if (!supabase) {
-      setMessage('Signups are unavailable right now. Please set the Supabase keys.');
-      setMessageType('error');
-      return;
-    }
-
     if (!email.trim() || !country.trim()) {
       setMessage(t('form.error_fields_required') || 'Please fill in all fields');
       setMessageType('error');
@@ -163,48 +156,42 @@ export default function Hero() {
 
     setIsSubmitting(true);
     try {
-      const { data, error } = await supabase
-        .from('nextcollect_registration_records')
-        .insert([{ email: email.trim(), country }])
-        .select('registration_position')
-        .maybeSingle();
+      const response = await callSignupFunction({
+        action: 'signup',
+        email: email.trim(),
+        country,
+      });
 
-      if (error) {
-        if (error.code === '23505') {
-          setMessage(t('form.error_email_exists') || 'This email is already registered');
-          setMessageType('error');
-        } else {
-          setMessage(t('form.error_try_again') || 'There was an issue with this entry. Please try again.');
-          setMessageType('error');
-        }
-      } else {
-        setRegistrationPosition(data?.registration_position);
-        setResendEmail(email.trim());
-        setShowSuccess(true);
-        setMessage('');
-        setMessageType('');
-        setEmail('');
-        setCountry('');
-
-        try {
-          const response = await sendConfirmationEmail({
-            emailAddress: email.trim(),
-            position: data?.registration_position,
-          });
-
-          if (response.ok) {
-            setEmailSent(true);
-          } else {
-            console.error('Email send failed:', await response.json());
-            setEmailSent(false);
-          }
-        } catch (emailErr) {
-          console.error('Error sending email:', emailErr);
-          setEmailSent(false);
-        }
+      if (response.status === 409) {
+        setMessage(t('form.error_email_exists') || 'This email is already registered');
+        setMessageType('error');
+        return;
       }
+
+      if (!response.ok) {
+        // C6: a server-side failure is NOT the same as bad input. Say so, so an outage
+        // reads as an outage rather than as the user's mistake.
+        setMessage(t('form.error_unavailable') || "We couldn't reach the signup service. Please try again in a moment.");
+        setMessageType('error');
+        return;
+      }
+
+      const result = await response.json();
+
+      setRegistrationPosition(result.position ?? null);
+      setResendEmail(email.trim());
+      setEmailSent(result.emailSent === true);
+      setShowSuccess(true);
+      setMessage('');
+      setMessageType('');
+      setEmail('');
+      setCountry('');
     } catch (err) {
-      setMessage(t('form.error_generic') || 'Something went wrong. Please try again.');
+      // C6: fetch only throws on network/DNS/CORS failure — never on an HTTP error status.
+      // This branch means the service was unreachable, which is exactly the failure that
+      // went undetected for five months (D-012). It must not read as "your input was wrong".
+      console.error('Signup request failed to reach the service:', err);
+      setMessage(t('form.error_unavailable') || "We couldn't reach the signup service. Please try again in a moment.");
       setMessageType('error');
     } finally {
       setIsSubmitting(false);
@@ -216,9 +203,10 @@ export default function Hero() {
     setResendError('');
     setIsResending(true);
     try {
-      const response = await sendConfirmationEmail({
-        emailAddress: resendEmail,
-        position: registrationPosition,
+      // Resend never sends a position — the server looks it up. D-001.
+      const response = await callSignupFunction({
+        action: 'resend',
+        email: resendEmail,
       });
 
       if (response.ok) {

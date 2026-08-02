@@ -31,6 +31,7 @@
     "error_email_invalid": "Bitte gib eine gültige E-Mail-Adresse ein",
     "error_email_exists": "Diese E-Mail-Adresse ist bereits registriert",
     "error_try_again": "Es gab ein Problem mit diesem Eintrag. Bitte versuche es erneut.",
+    "error_unavailable": "Wir konnten den Anmeldedienst nicht erreichen. Bitte versuchen Sie es gleich noch einmal.",
     "error_generic": "Etwas ist schiefgelaufen. Bitte versuche es erneut.",
     "error_resend": "Erneutes Senden fehlgeschlagen. Bitte versuche es erneut."
   },

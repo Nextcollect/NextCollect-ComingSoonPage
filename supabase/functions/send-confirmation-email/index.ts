@@ -24,10 +24,24 @@ const supabase = createClient(
   Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
 );
 
-interface EmailRequest {
-  email: string;
-  registrationPosition?: number;
-}
+// D-002: this function is now the ONLY path that writes the table or reads a position.
+// The anon key has no access at all (policies dropped, grants revoked, migration
+// 20260802100100). Everything below runs with the service role.
+
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const MAX_EMAIL_LENGTH = 254; // RFC 5321
+
+// NOTE: duplicated from app/components/Hero/index.jsx (EUROPEAN_COUNTRIES).
+// Change one, change the other — same class of duplication as the milestone
+// thresholds below. Server-side validation is required because dropping the anon
+// INSERT policy removed the database-level non-empty check.
+const EUROPEAN_COUNTRIES = [
+  "Austria", "Belgium", "Bulgaria", "Croatia", "Cyprus", "Czech Republic",
+  "Denmark", "Estonia", "Finland", "France", "Germany", "Greece",
+  "Hungary", "Ireland", "Italy", "Latvia", "Lithuania", "Luxembourg",
+  "Malta", "Netherlands", "Poland", "Portugal", "Romania", "Slovakia",
+  "Slovenia", "Spain", "Sweden", "United Kingdom", "Switzerland", "Norway",
+];
 
 Deno.serve(async (req: Request) => {
   const origin = req.headers.get("origin") ?? "";
@@ -48,17 +62,16 @@ Deno.serve(async (req: Request) => {
   }
 
   try {
-    // Issue #2: parse body manually so we can validate registrationPosition at runtime
+    // Parse manually: nothing from the client is trusted, and a TypeScript interface
+    // enforces nothing at runtime.
     const body = await req.json();
-    const email: string = body.email;
-    const rawPosition = body.registrationPosition;
-    // Accept only positive integers — anything else (strings, floats, objects, HTML) is treated as absent
-    const registrationPosition: number | null =
-      Number.isInteger(rawPosition) && rawPosition > 0 ? (rawPosition as number) : null;
+    const email = typeof body.email === "string" ? body.email.trim() : "";
+    const country = typeof body.country === "string" ? body.country.trim() : "";
+    const action = body.action === "resend" ? "resend" : "signup";
 
-    if (!email || typeof email !== "string") {
+    if (!email || email.length > MAX_EMAIL_LENGTH || !EMAIL_RE.test(email)) {
       return new Response(
-        JSON.stringify({ error: "Email is required" }),
+        JSON.stringify({ error: "A valid email address is required" }),
         {
           status: 400,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -78,21 +91,106 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    // Issue #3: verify the address is actually registered — prevents sending to arbitrary emails
-    const { data: registration } = await supabase
-      .from("nextcollect_registration_records")
-      .select("id")
-      .eq("email", email)
-      .maybeSingle();
+    // registrationPosition is NEVER taken from the request. On signup it is computed
+    // here; on resend it is read server-side and used only to compose the email.
+    // D-001: it is returned to the caller ONLY when this request created the row.
+    let registrationPosition: number | null = null;
 
-    if (!registration) {
-      return new Response(
-        JSON.stringify({ error: "Email not registered" }),
-        {
-          status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+    if (action === "signup") {
+      if (!EUROPEAN_COUNTRIES.includes(country)) {
+        return new Response(
+          JSON.stringify({ error: "A valid country is required" }),
+          {
+            status: 400,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          }
+        );
+      }
+
+      // True ordinal, computed at insert time. The old sequence default produced gaps
+      // (a duplicate insert consumed nextval before the unique constraint rejected it),
+      // so the number was never the real Nth signup. Migration 20260802100100 dropped it.
+      // ponytail: count-then-insert can collide under simultaneous signups, giving two
+      // people the same number. Harmless on a waitlist and UNIQUE(email) still holds;
+      // take an advisory lock only if that ever matters.
+      const { count, error: countError } = await supabase
+        .from("nextcollect_registration_records")
+        .select("*", { count: "exact", head: true });
+
+      if (countError) {
+        console.error("Count failed:", countError);
+        return new Response(
+          JSON.stringify({ error: "Signup temporarily unavailable" }),
+          {
+            status: 503,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          }
+        );
+      }
+
+      const nextPosition = (count ?? 0) + 1;
+
+      const { data: inserted, error: insertError } = await supabase
+        .from("nextcollect_registration_records")
+        .insert({ email, country, registration_position: nextPosition })
+        .select("registration_position")
+        .maybeSingle();
+
+      if (insertError) {
+        // 23505 = unique violation. Report registration status but NOT the position:
+        // returning a position for a caller-supplied address would be the enumeration
+        // oracle D-001 exists to prevent.
+        if (insertError.code === "23505") {
+          return new Response(
+            JSON.stringify({ alreadyRegistered: true }),
+            {
+              status: 409,
+              headers: { ...corsHeaders, "Content-Type": "application/json" },
+            }
+          );
         }
-      );
+        console.error("Insert failed:", insertError);
+        return new Response(
+          JSON.stringify({ error: "Signup temporarily unavailable" }),
+          {
+            status: 503,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          }
+        );
+      }
+
+      registrationPosition = inserted?.registration_position ?? nextPosition;
+    } else {
+      // Resend: the row must already exist. The position is looked up server-side and
+      // used only to build the email — it is never returned to the caller.
+      const { data: existing, error: lookupError } = await supabase
+        .from("nextcollect_registration_records")
+        .select("registration_position")
+        .eq("email", email)
+        .maybeSingle();
+
+      if (lookupError) {
+        console.error("Lookup failed:", lookupError);
+        return new Response(
+          JSON.stringify({ error: "Unable to resend right now" }),
+          {
+            status: 503,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          }
+        );
+      }
+
+      if (!existing) {
+        return new Response(
+          JSON.stringify({ error: "Email not registered" }),
+          {
+            status: 400,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          }
+        );
+      }
+
+      registrationPosition = existing.registration_position ?? null;
     }
 
     // NOTE: milestone thresholds are duplicated in app/components/Hero/index.jsx (getMilestoneText)
@@ -290,8 +388,22 @@ Deno.serve(async (req: Request) => {
 
     if (!response.ok) {
       // Issue #4: log the upstream detail server-side; never return it to the client.
-      // Also normalise the status so Resend's own codes aren't mirrored outward.
       console.error("Resend API error:", response.status, result);
+
+      // A signup row was already committed at this point. Reporting a bare failure would
+      // lose that — the user would retry and hit "already registered". Report the signup
+      // as successful with emailSent:false so the client can offer a resend (C6: surface
+      // the failure, never swallow it and never lie about it).
+      if (action === "signup") {
+        return new Response(
+          JSON.stringify({ success: true, emailSent: false, position: registrationPosition }),
+          {
+            status: 200,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          }
+        );
+      }
+
       return new Response(
         JSON.stringify({ error: "Failed to send email" }),
         {
@@ -301,12 +413,15 @@ Deno.serve(async (req: Request) => {
       );
     }
 
+    // D-001: the position is returned ONLY for a signup this request just created.
+    // A resend never discloses it, so a position can never be obtained for an
+    // arbitrary caller-supplied address.
     return new Response(
-      JSON.stringify({
-        success: true,
-        message: "Email sent successfully",
-        id: result.id,
-      }),
+      JSON.stringify(
+        action === "signup"
+          ? { success: true, emailSent: true, position: registrationPosition }
+          : { success: true, emailSent: true },
+      ),
       {
         status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" },

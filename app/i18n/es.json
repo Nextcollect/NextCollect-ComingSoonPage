@@ -31,6 +31,7 @@
     "error_email_invalid": "Por favor, introduce una dirección de correo válida",
     "error_email_exists": "Este correo ya está registrado",
     "error_try_again": "Hubo un problema. Por favor, inténtalo de nuevo.",
+    "error_unavailable": "No pudimos conectar con el servicio de registro. Vuelve a intentarlo en un momento.",
     "error_generic": "Algo salió mal. Por favor, inténtalo de nuevo.",
     "error_resend": "Error al reenviar. Por favor, inténtalo de nuevo."
   },
