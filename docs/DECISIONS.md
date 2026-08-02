@@ -66,34 +66,44 @@ requires `supabase functions serve` with `ALLOW_LOCAL_ORIGIN=true`. Server-side 
 (format, length, `country ∈ EUROPEAN_COUNTRIES`) now lives in the edge function and must be
 implemented there — dropping the INSERT policy removes the database-level check entirely.
 
-### ⚠ Load-bearing assumption — VERIFY BEFORE IMPLEMENTING
+### ✅ Load-bearing assumption — VERIFIED 2026-08-02
 
-**This decision assumes Row Level Security is actually ENABLED on
-`nextcollect_registration_records`. If it is not, dropping the policies accomplishes nothing** —
-policies are inert when RLS is off, and `anon` retains whatever table-level grants exist. The
-entire fix rests on this.
+This decision assumed Row Level Security is actually ENABLED on
+`nextcollect_registration_records` — if it were not, dropping the policies would accomplish
+nothing. **Verified against the live database:**
 
-Migration `20260107141200_20260107_migrate_to_registration_records.sql:39` does contain
-`ALTER TABLE ... ENABLE ROW LEVEL SECURITY`, so RLS *should* be on — but that is an inference
-about **live remote state** from a migration file. It does not prove the migration was applied,
-nor that RLS was not toggled off afterwards via the dashboard. **Verify first:**
-
-```sql
-SELECT relrowsecurity FROM pg_class
-WHERE relname = 'nextcollect_registration_records';   -- must be true
+```
+SELECT relrowsecurity FROM pg_class WHERE relname='nextcollect_registration_records';
+→ relrowsecurity = true      -- RLS is ON. The policy drops will be meaningful.
 ```
 
-**Recommendation (NOT yet decided — owner will confirm against live state):** additionally issue
+The read leak was also confirmed live: a `GET` with the public anon key returned a full row
+(HTTP 200), and Supabase advisor lint 0026 independently flags the same exposure.
+
+### `REVOKE` — upgraded from optional to RECOMMENDED
+
+Phase A found that `anon` holds **every** table privilege:
+
+```
+relacl → anon=arwdDxtm/postgres
+         (INSERT, SELECT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER, MAINTAIN)
+```
+
+**RLS is the only thing restricting `anon` today.** UPDATE and DELETE are blocked solely because
+no policies exist for those commands — not because the grants are absent. Therefore, alongside
+dropping the policies:
 
 ```sql
 REVOKE ALL ON nextcollect_registration_records FROM anon;
+REVOKE ALL ON nextcollect_registration_records FROM authenticated;  -- advisor lint 0027
 ```
 
-as defence-in-depth, so the table is inaccessible to the anon role **regardless of RLS state**.
-This is safe under D-002 because the edge function connects with the service role, which holds its
-own grants and bypasses RLS — revoking `anon` does not affect it. No migration in this repository
-issues any `GRANT`/`REVOKE`, so `anon`'s current access comes entirely from Supabase's stock
-defaults.
+This removes the dependency on RLS never being toggled off. Safe under D-002: the edge function
+connects with the service role, which holds its own grants and bypasses RLS. `authenticated` is
+included because it holds identical grants and this project has no auth at all.
+
+*(Note: `information_schema.role_table_grants` returned empty for these roles — that view filters
+by current-user visibility and is misleading here. `pg_class.relacl` is authoritative.)*
 
 ---
 
@@ -234,6 +244,31 @@ function has no caller anywhere in the codebase, and the advisor warning it was 
 concerned a *different, transient* temp-schema object. Dropping is both simpler long-term and
 safer.
 
+### ✅ RESOLVED by Phase A verification (2026-08-02)
+
+The remote was checked directly. **The function does not exist and the migration was never
+applied:**
+
+```
+SELECT ... FROM pg_proc WHERE proname='count_estimate';       → 0 rows
+POST /rest/v1/rpc/count_estimate                              → HTTP 404 (PGRST202)
+list_migrations                                               → []  (ledger absent entirely)
+get_advisors('security')                                      → no mutable-search_path warning
+```
+
+There are **no** `SECURITY DEFINER` functions in `public` at all. The advisor warning this
+migration was written to silence **does not exist today** — it was solving a phantom.
+
+**Therefore the "not applied" branch applies: simply delete the migration file.** No remote
+`DROP` is required, and the earlier concern about desyncing the ledger is moot here.
+
+**But the general rule in this decision still stands** for every future migration — with an
+important amendment discovered in the same pass: **there is no migration ledger at all**
+(`supabase_migrations` schema does not exist), so nothing has ever been applied via the CLI and
+the live schema was hand-built. `supabase db push` would try to replay all six migrations against
+an existing schema and abort on `CREATE POLICY` (which has no `IF NOT EXISTS`). The ledger must be
+baselined before any migration-based change can ship. Tracked as **C-OPS** in `PLAN.md`.
+
 ---
 
 ## D-008 — Export the subscriber table before any database change
@@ -286,13 +321,58 @@ accomplish nothing.
 `.env.*.local`, but **not** `.env.example`, `.env.production` or `.env.development` — a future
 `.env.production` would be committed silently. Consider `.env*` with `!.env.example`.
 
+### ⚠ NEW INPUT from Phase A (2026-08-02) — the repository is PUBLIC
+
+Vercel reports `githubRepoVisibility: "public"` for `Nextcollect/NextCollect-ComingSoonPage`.
+**The historical `.env` blobs are therefore world-readable, not merely visible to collaborators.**
+
+This does not change the technical blast radius — the keys are anon/public keys that ship in the
+browser bundle regardless — but it does change the practical picture, and it raises the stakes of
+the **live read leak (C2)**: anyone can read the repo, recover the anon key from history *or* from
+the bundle, and dump the table today. Fixing C2 remains the actual fix; key rotation alone would
+still accomplish nothing.
+
+**Still OPEN, still the owner's call.** Two things worth deciding together now:
+1. Whether to rotate the anon key (hygiene) — unchanged from the options above.
+2. **Whether the repository should be public at all.** That is a separate decision the owner has
+   not been asked before; flagging it rather than assuming either way.
+
+---
+
+## D-010 — Production and the repository have diverged; production is the source of truth
+
+**Status:** Recorded 2026-08-02 from Phase A verification. **Not a choice — a discovered fact**
+that invalidates reasoning from the code alone.
+
+Three independent divergences were found:
+
+1. **The deployed edge function is the pre-hardening version** (v3, ~2026-03-10). Production still
+   has `Access-Control-Allow-Origin: "*"`, no runtime validation, raw `${registrationPosition}`
+   interpolated into email HTML, unresolved `{{placeholder}}` tokens, and **no registered-email
+   check — i.e. an open relay** that will send NextCollect-branded mail to any address supplied.
+   Every one of these is fixed *in the repo* and unfixed *in production*. `verify_jwt: true` is not
+   a mitigation: the anon key is a valid JWT and is public.
+2. **The live INSERT policy is not what migration 5 says.** Production enforces the non-empty
+   `email`/`country` check from migration 2; the repo's migration 5 says `WITH CHECK (true)`. The
+   regression exists only in the files.
+3. **There is no migration ledger.** `supabase_migrations` does not exist; nothing was ever applied
+   via the CLI. The live schema was built by hand.
+
+**Consequence for anyone working here:** *do not infer production state from the repository.*
+Verify with the read-only Supabase MCP (`get_edge_function`, `execute_sql` against `pg_policies` /
+`pg_class`, `list_migrations`) before assuming a fix is live. The prior-audit reconciliation table
+in `PLAN.md` describes **repo** state only.
+
 ---
 
 ## Verification status caveat
 
-Decisions D-001, D-002, D-003 and D-007 were made against **code evidence** (files read directly).
-The **live remote state** — whether `count_estimate` exists on the remote, whether the anon
-policies are active, Resend domain authentication, and Vercel environment configuration — was
-**not verifiable** at the time of writing (no Supabase DB password, no Vercel CLI, no Resend
-access). Severity rankings that depend on live state are marked `UNVERIFIED — pending Phase A` in
-the plan. Confirm before acting, and update this record if reality differs.
+**Phase A verification completed 2026-08-02** via read-only MCP (Supabase, Resend, Vercel) plus a
+production probe run after the D-008 export. D-002's RLS assumption is **confirmed**; D-007's
+`count_estimate` concern is **resolved** (absent, never applied); Resend domain auth is
+**verified healthy**; Vercel preview deploys are **not** publicly reachable. D-009 gained a new
+input (public repository). D-010 records the repo/production divergence.
+
+**One gap remains:** the Vercel MCP exposes no environment-variable listing tool, so **env var
+names and Production/Preview parity are still unverified**. Run `vercel env ls` (names only, never
+values) or check the dashboard before treating the env configuration as sound.
