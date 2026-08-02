@@ -364,6 +364,58 @@ still accomplish nothing.
 
 ---
 
+## D-012 — Production points at a DEAD Supabase project; signup has never worked
+
+**Status:** Discovered 2026-08-02 during post-deploy testing. **Not a decision — a discovered
+outage.** This is the most business-critical finding of the entire audit and it is not a security
+issue.
+
+**Symptom.** A real signup on `https://www.nxtcollect.com` fails with
+`net::ERR_NAME_NOT_RESOLVED` and the form shows "There was an issue with this entry."
+
+**Root cause, proven.** The production JavaScript bundle
+(`/_next/static/chunks/app/page-*.js`) has a **different Supabase project baked into it**:
+
+| | Project ref | DNS |
+|---|---|---|
+| Production bundle (Vercel) | `uvlprdktzayskmcwxcye` | **NXDOMAIN — does not exist** |
+| Local `.env` (correct) | `nofzyhxjpsikdhbcpfuo` | resolves, live |
+
+The **anon keys differ too** (sha1 `66bd89bbf3db` vs `11fa2c4f3fa5`), so this is a complete,
+self-consistent pointer to a dead **Bolt-era** project — not a partial mix-up. Both
+`NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` in Vercel are wrong.
+
+**Duration: since the first deployment.** Vercel env vars are 148 days old (≈2026-03-07); the first
+deployment was 2026-03-07 and the current production deployment is 2026-03-10. **Production signup
+has never worked — roughly five months.** Corroborating evidence, all previously misread as
+"the site is dormant": 1 table row, zero edge-function invocations, no signup API traffic, and 4
+Resend emails all addressed to the owner's own two addresses. The single 2026-03-14 row came from
+**local dev** (correct `.env`), not production — the then-deployed function had
+`Access-Control-Allow-Origin: "*"` and no origin check, so `localhost` reached it.
+
+**This was NOT caused by the C0/C4 edge-function deploy.** That deploy touched only
+`supabase/functions/send-confirmation-email`. The failure is a client-side DNS error on the
+Supabase REST insert, originating in a Vercel static asset built five months earlier. A Supabase
+function deploy cannot modify a Vercel bundle. **Do not roll back C0** — rolling back would
+reintroduce the open relay without fixing anything.
+
+### ⚠ Sequencing consequence — read before fixing the URL
+
+**The C2 read leak is currently inert in production** because the public bundle points at a
+project that does not exist. **Fixing the URL activates the real leak**: the moment production
+points at `nofzyhxjpsikdhbcpfuo`, the live `USING (true)` policy and anon's full table grants
+become reachable from every visitor's browser.
+
+**Therefore: land C2 (drop both policies) and the `REVOKE` BEFORE, or in the same change as, the
+Vercel env fix.** Going from "broken but not leaking" straight to "working and leaking" would be a
+self-inflicted regression.
+
+**Also note:** `NEXT_PUBLIC_*` values are **inlined at build time**. Changing the Vercel
+environment variable alone does nothing — the project must be **redeployed/rebuilt** for the new
+value to reach the bundle.
+
+---
+
 ## D-011 — Never mark our own transactional email as spam
 
 **Status:** Decided · **Owner-directed 2026-08-02**

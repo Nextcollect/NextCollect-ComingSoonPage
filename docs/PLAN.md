@@ -331,19 +331,58 @@ rebase onto `origin/main`, not the stale local `main`. Requires `gh`. Effort M�
 
 ---
 
-## Priority order (post-Phase-A)
+## C-ENV — **NEW #1. Production points at a DEAD Supabase project. Signup has never worked.**
 
-1. **C0** — deploy the hardened edge function (open relay + HTML injection live in production)
-2. **C-OPS** — baseline the migration ledger (blocks all DB work)
-3. **C2** — close the read leak (+ `REVOKE` from anon/authenticated)
-4. **C3** — rate limiting · **C4** — stop detail leakage
+Discovered 2026-08-02 in post-deploy testing. **See D-012 for the full evidence.** Not a security
+issue — a five-month outage.
+
+- Production bundle carries project ref **`uvlprdktzayskmcwxcye`** → **NXDOMAIN**. Correct ref is
+  `nofzyhxjpsikdhbcpfuo` (local `.env` is right). **Anon keys differ too** — a complete pointer to
+  a dead Bolt-era project.
+- Broken since the first deployment (env vars 148d old ≈ 2026-03-07; deployments 2026-03-07 and
+  2026-03-10). The "dormant site" reading in this plan was wrong: it was **broken**, not idle.
+- **Not caused by the C0/C4 deploy** — that touched only the edge function; this is a client-side
+  DNS failure from a Vercel asset built five months earlier. **Do not roll back C0.**
+
+**Fix (owner runs; Vercel MCP is read-only per guardrail 17):**
+1. **Land C2 + the `REVOKE` first** — see the warning below.
+2. Vercel → Settings → Environment Variables: set `NEXT_PUBLIC_SUPABASE_URL` and
+   `NEXT_PUBLIC_SUPABASE_ANON_KEY` to the live project's values, across Production/Preview/Development.
+3. Delete `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY` and `RESEND_API_KEY` from Vercel (already
+   recorded as cleanup — they belong to the dead project / are unused).
+4. **Redeploy.** `NEXT_PUBLIC_*` is inlined at build time; changing the variable alone does nothing.
+5. Retest signup on `https://www.nxtcollect.com` (not a `.vercel.app` URL — those 403).
+
+> ### ⚠ ORDER MATTERS
+> The C2 read leak is **currently inert in production** because the bundle points nowhere.
+> **Fixing the URL activates it.** Land C2 (drop both anon policies) and the `REVOKE` **before or
+> with** the env fix — otherwise the site goes from "broken but not leaking" to "working and
+> leaking" in one step.
+
+---
+
+## Priority order (revised 2026-08-02)
+
+1. **C-ENV** — production points at a dead project; signup has never worked *(gated on C2)*
+2. **C2** — close the read leak + `REVOKE` from anon/authenticated *(must precede C-ENV)*
+3. **C-OPS** — baseline the migration ledger (blocks all migration-based DB work)
+4. **C3** — rate limiting
 5. **D1–D4** — GDPR launch conditions
 6. **I** — Next 16 / React 19 (EOL framework)
 7. **E** correctness → **G1–G4** a11y → **F** cleanup → **G7–G11** coherence
 8. **C1** (delete file), **C5** (reconcile migration) — trivial, fold in anywhere
 
-**Must-fix before production:** C0 · C-OPS · C2 · C3 · C4 · D1–D5 · E1 · E2 · E5 · G1–G4 · I.
-**Nice-to-have:** C1/C5 (trivial) · E3 · E4 · E6 · F (except F6) · G5–G11 · D-009 key rotation.
+**DONE:** ~~C0~~ (hardened edge function deployed 2026-08-02) · ~~C4~~ (folded into the same deploy).
+
+**Must-fix before production:** C-ENV · C2 · C-OPS · C3 · D1–D5 · E1 · E2 · E5 · G1–G4 · I.
+**Nice-to-have:** C1/C5 (trivial) · E3 · E4 · E6 · F (except F6) · G5–G11.
+
+### Minor console noise (recorded, not urgent)
+- `/favicon.ico` → 404. `layout.jsx:38-41` points `icons` at an SVG; no `favicon.ico`, no
+  `apple-touch-icon`. Fold into E1 with the `og-image.png` fix.
+- `dotlottie-wc.js` preload `crossorigin` mismatch — the `next/script` tag at `layout.jsx:49` loads
+  it from unpkg.com without a matching `crossorigin`, so the preload is fetched twice. Fold into F3
+  (or drop the third-party CDN dependency for a decorative animation).
 
 ---
 
