@@ -99,14 +99,27 @@ Never print values. Names only.
 
 | Name | Lives in | Notes |
 |---|---|---|
-| `NEXT_PUBLIC_SUPABASE_URL` | Next `.env` + Vercel | Bundled into the browser by design |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Next `.env` + Vercel | Public by design — never a security boundary |
-| `SUPABASE_URL` | Supabase secrets | Platform-injected in deployed functions |
-| `SUPABASE_SERVICE_ROLE_KEY` | Supabase secrets | **Never** in the Next `.env`, never `NEXT_PUBLIC_*` |
-| `RESEND_API_KEY` | Supabase secrets | **Currently also sits in the Next `.env` — remove it there.** The Next app never reads it |
+| `NEXT_PUBLIC_SUPABASE_URL` | Next `.env` + Vercel (all 3 envs) | Bundled into the browser by design |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Next `.env` + Vercel (all 3 envs) | Public by design — never a security boundary |
+| `SUPABASE_URL` | **Supabase secrets only** | Platform-injected; verified present |
+| `SUPABASE_SERVICE_ROLE_KEY` | **Supabase secrets only** | Verified present. **Never** in the Next `.env`, never `NEXT_PUBLIC_*` |
+| `RESEND_API_KEY` | **Supabase secrets ONLY** | Verified present. The Next app never reads it — grep of `app/` returns zero hits. See cleanup below |
 | `ALLOW_LOCAL_ORIGIN` | Supabase secrets (local dev) | Set `true` to allow `http://localhost:3000` past the origin allowlist |
 
-There is **no `.env.example`** — worth adding, names only.
+**Verified 2026-08-02 (`vercel env ls`): no secret is exposed as `NEXT_PUBLIC_*`.** The only
+`NEXT_PUBLIC_` vars are the Supabase URL and anon key, both intentionally public. Full parity
+across Production / Preview / Development.
+
+**Recorded cleanup — do NOT act without the owner's say-so:**
+- `RESEND_API_KEY` is **also** set in Vercel (all 3 envs) and in the local Next `.env`, but nothing
+  in the Next app reads it — the edge function has its own copy in Supabase secrets. Unnecessary
+  duplication of a live sending credential. **Record as: delete from Vercel and from the Next `.env`.**
+- `VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY` are set in Vercel (all 3 envs) and are **dead
+  Bolt/Vite residue** — the same pair found in the `.env` git-history finding (D-009).
+  **Record as: delete from Vercel.**
+
+There is **no `.env.example`** — worth adding, names only. `.gitignore` uses `.env*` with an
+`!.env.example` exception so it stays committable.
 
 ## Running it
 

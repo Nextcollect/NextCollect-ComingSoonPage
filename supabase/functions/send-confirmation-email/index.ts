@@ -289,14 +289,13 @@ Deno.serve(async (req: Request) => {
     const result = await response.json();
 
     if (!response.ok) {
-      console.error("Resend API error:", result);
+      // Issue #4: log the upstream detail server-side; never return it to the client.
+      // Also normalise the status so Resend's own codes aren't mirrored outward.
+      console.error("Resend API error:", response.status, result);
       return new Response(
-        JSON.stringify({
-          error: "Failed to send email",
-          details: result,
-        }),
+        JSON.stringify({ error: "Failed to send email" }),
         {
-          status: response.status,
+          status: 502,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         }
       );
@@ -314,12 +313,10 @@ Deno.serve(async (req: Request) => {
       }
     );
   } catch (error) {
+    // Issue #4: exception detail stays in the logs, never in the response body.
     console.error("Error in send-confirmation-email:", error);
     return new Response(
-      JSON.stringify({
-        error: "Internal server error",
-        details: error instanceof Error ? error.message : String(error),
-      }),
+      JSON.stringify({ error: "Internal server error" }),
       {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },

@@ -73,9 +73,23 @@ table-level grants for them.
 - **Preview deploys are NOT public** — `ssoProtection: enabled` / `all_except_custom_domains`.
   Password protection off, trusted IPs off. **This concern is resolved.**
 - **`githubRepoVisibility: "public"`** — the GitHub repository is public. See D-009.
-- **REMAINING GAP:** the Vercel MCP exposes no environment-variable listing tool. **Env var names
-  and Production/Preview parity are still unverified.** Run `vercel env ls` (names only, never
-  values) or check Settings → Environment Variables. This is the one Phase A question still open.
+- **Env vars — VERIFIED 2026-08-02 via `vercel env ls` (names only). No critical finding.**
+  Five vars, all present in Production / Preview / Development (full parity):
+  `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, `NEXT_PUBLIC_SUPABASE_URL`,
+  `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `RESEND_API_KEY`.
+  **The only `NEXT_PUBLIC_*` vars are the Supabase URL and anon key — both intentionally public.
+  No secret is browser-exposed.** Two cleanup items recorded (not acted on):
+  - `RESEND_API_KEY` in Vercel is **unused** — grep of `app/` returns zero hits; the edge function
+    reads its own copy from Supabase secrets. Duplicated live credential → **delete from Vercel**
+    and from the local Next `.env`.
+  - `VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY` are dead Bolt/Vite residue (same pair as in
+    D-009's git-history finding) → **delete from Vercel**.
+
+**Phase A is now fully closed — no open verification items remain.**
+
+**Supabase secrets — VERIFIED present:** `RESEND_API_KEY`, `SUPABASE_ANON_KEY`, `SUPABASE_DB_URL`,
+`SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_URL`. The C0 module-scope-client boot risk is therefore
+cleared.
 
 ## Git
 
