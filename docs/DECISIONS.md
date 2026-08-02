@@ -80,7 +80,20 @@ SELECT relrowsecurity FROM pg_class WHERE relname='nextcollect_registration_reco
 The read leak was also confirmed live: a `GET` with the public anon key returned a full row
 (HTTP 200), and Supabase advisor lint 0026 independently flags the same exposure.
 
-### `REVOKE` — upgraded from optional to RECOMMENDED
+### `REVOKE` — ELEVATED to the same tier as the read-leak fix (owner, 2026-08-02)
+
+**This is not defence-in-depth. It is a live data-destruction exposure one toggle away.**
+
+`anon=arwdDxtm` includes **UPDATE, DELETE and TRUNCATE**. Those are blocked today *only* because
+no RLS policy exists for those commands. RLS is a single switch — disabled in the dashboard by
+accident, or by a future migration, or during debugging — and at that moment the public anon key,
+which ships in the browser bundle and sits in a public repository, can `TRUNCATE` the subscriber
+table. There is no second layer.
+
+The grants serve no purpose: under D-002 the anon role has no legitimate access to this table at
+all. **Do the `REVOKE` in the same change as the policy drops, not as a follow-up.**
+
+### `REVOKE` — supporting detail
 
 Phase A found that `anon` holds **every** table privilege:
 
@@ -290,12 +303,24 @@ changes** — which is exactly why the export is separate and mandatory.
 
 ---
 
-## D-009 — `.env` committed to git history — **OPEN, NOT DECIDED**
+## D-009 — `.env` in git history, and repository visibility — **DECIDED 2026-08-02**
 
-**Status: OPEN — awaiting owner decision.**
-**The executing model must NOT act on this item.** Do not rotate keys, do not rewrite history,
-do not "clean up" the historical blobs. Leave it entirely until the owner decides. It is recorded
-here precisely because undecided items are what get silently dropped in a handoff.
+**Status: Decided · Owner-directed.**
+
+**Decision, three parts:**
+1. **Do NOT rotate the anon key.** It is public by design — it ships in the browser bundle. Rotation
+   accomplishes nothing against an exposure that was never a secret. The exploitable part was the
+   `USING (true)` policy (C2), not the key.
+2. **Do NOT rewrite git history.** Disruptive (forced pushes, invalidated clones) for low value,
+   given (1).
+3. **DO make the GitHub repository private.** Free, reversible, and it removes casual discovery of
+   the schema, migration files, edge-function source and endpoint structure.
+
+**⚠ Caveat that must not be lost: assume the repository has already been cloned and indexed.**
+Making it private stops *future* exposure; it does **not** undo past exposure. Anything that was
+public — schema shape, endpoint paths, the anon key — should be treated as already known to third
+parties. Do not let "it's private now" become a reason to skip C2, C3 or the `REVOKE`; those remain
+the real fixes.
 
 **What is in history.** `.env` was committed and removed twice — added at `3f6e53e` ("Start
 repository"), deleted at `dfbbb52`, re-added at `1b79a34`, deleted again at `818e015`. The blobs
@@ -336,6 +361,25 @@ still accomplish nothing.
 1. Whether to rotate the anon key (hygiene) — unchanged from the options above.
 2. **Whether the repository should be public at all.** That is a separate decision the owner has
    not been asked before; flagging it rather than assuming either way.
+
+---
+
+## D-011 — Never mark our own transactional email as spam
+
+**Status:** Decided · **Owner-directed 2026-08-02**
+
+**Context.** Resend shows **4 emails ever sent**, all to the owner's own addresses during testing —
+and **1 of the 4 is `complained`** (marked as spam). On a domain with essentially no positive
+sending history, a 25% complaint rate is a genuine reputation signal to mailbox providers,
+regardless of it being self-inflicted during testing.
+
+**Decision.** Do not mark NextCollect's own transactional mail as spam. To remove a test message,
+delete it. Complaint rate is a durable domain-reputation metric — it does not reset when the test
+ends, and it directly threatens deliverability at launch, which is this site's entire function.
+
+**Related:** `List-Unsubscribe` (D3 in `PLAN.md`) is the standard mitigation and is already a
+required launch condition — a working unsubscribe gives recipients an alternative to the spam
+button. Resend open/click tracking is currently **off**; keep it off (GDPR advantage).
 
 ---
 
