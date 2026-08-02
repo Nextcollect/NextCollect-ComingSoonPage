@@ -25,7 +25,7 @@ Everything you need is in files. Read in this order:
 | 4. C6 minimal | ✅ **DONE** (landed inside step 2) |
 | 5. GDPR | 🟡 **PARTIAL** — inventory done; plumbing not started; policy blocked |
 | 6. Sender address + brand capitalisation | ⬜ not started |
-| 7. Next 16 + React 19 | ⬜ not started |
+| 7. Next 16 + React 19 | ✅ **DONE on branch `next16-upgrade`** — builds and renders clean; not merged |
 | 8. Vercel env fix + go-live | ⬜ not started |
 
 ### Verified production state (2026-08-02, read-only MCP + curl)
@@ -131,8 +131,26 @@ those is near-zero here (no middleware, no API routes, no server actions, no dyn
   (`propTypes`, `defaultProps`, `ReactDOM.render`, `findDOMNode`, `forwardRef`, string refs, legacy
   context). Next 15's async `cookies`/`headers`/`params`/`searchParams` is **entirely unused**.
   6 `next/*` imports across 5 files.
-- **Most likely breakage:** `app/components/Section/index.jsx:60` routes an **SVG through
-  `next/image`** with no `images` config and no `dangerouslyAllowSVG`. Check this first.
+- **The flagged SVG risk did NOT materialise.** Verified on Next 16.2.12: SVGs are **not** routed
+  through the optimizer at all — the rendered HTML uses the raw path (`src="/img/….svg"`) and all
+  8 SVG assets return 200. Forcing an SVG through `/_next/image` returns 400, which is Next
+  correctly *refusing* to optimize SVG without `dangerouslyAllowSVG` — the safe default. **No
+  `images` config is needed.**
+
+### npm audit reports 3 highs — assessed, and NOT a blocker
+
+`npm audit` flags `postcss@8.4.31` and `sharp@0.34.5`. Both are **transitive dependencies of Next
+itself** — there is no Next 16.2.x that avoids them, and `postcss@8.4.31` was **already present in
+the Next 14 tree**, so the upgrade does not introduce it.
+
+Neither is exploitable in this app:
+- **postcss** — build-time CSS processing. The advisories need attacker-controlled CSS or CSS
+  comments; all CSS here is authored in-repo. No user-supplied CSS exists.
+- **sharp/libvips** — used by `next/image`. The advisories need attacker-supplied images; all images
+  are static assets in `public/`. There is no upload path.
+
+**Never run `npm audit fix --force` here.** npm's proposed remedy is `next@9.3.3` — a downgrade of
+seven majors that would undo this entire step.
 - `@supabase/supabase-js` is now **unused by the Next app** (the client was deleted in step 2).
   Remove it from `package.json` as part of this bump.
 - **Validate on a preview deploy, not production:** fix the **Preview** env vars first (previews are
