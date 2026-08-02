@@ -497,6 +497,48 @@ from the start."*
 
 ---
 
+## D-013 — Consent by submission, and NO cookie banner for the locale preference
+
+**Status:** Decided · **Owner-directed 2026-08-02**
+
+### Consent mechanism: submission-as-consent with a localized notice
+
+No tick-box. A clear notice **above** the submit button, translated into all six languages,
+stating what will be sent. The email *is* the service being requested, so a checkbox adds friction
+for no real gain.
+
+**This is sound under GDPR.** Recital 32 accepts "another statement or conduct which clearly
+indicates acceptance" — submitting a form is a clear affirmative act, and consent here is not
+bundled with any secondary purpose.
+
+**But it constrains what may be sent later, and that constraint must not be lost.** This consent
+covers *the launch announcement the user signed up for*. It does **not** cover newsletters, product
+updates, or offers. Sending those requires **fresh consent**. The notice must therefore say
+precisely what will be sent, and the consent wording version + timestamp must be recorded so what
+was agreed is provable.
+
+**Rejected — a tick-box.** More conservative, and defensible, but it suppresses conversion on a
+waitlist whose entire purpose is to be emailed. Not required by GDPR for this narrow, unbundled
+purpose.
+
+### No cookie banner for the `localStorage` locale preference
+
+E2 will persist the chosen language in `localStorage`. That is storage on terminal equipment under
+the ePrivacy Directive, so the reflex is to add a consent banner. **Do not.**
+
+A language preference stored because the user actively chose that language is **strictly necessary
+for a service the user requested**, which is the standard exemption. Adding a banner would be
+cargo-cult compliance: it would degrade the experience of every visitor, imply the site does
+tracking it does not do, and protect nobody.
+
+For the avoidance of doubt about *why* this is safe here: the site sets **no** advertising or
+analytics storage of any kind. There is no analytics package, and Resend open/click tracking is
+**off** — keep it off. Mention the locale storage in the privacy policy; do not gate it.
+
+**Recorded explicitly so a future reviewer does not "fix" this out of caution.**
+
+---
+
 ## D-011 — Never mark our own transactional email as spam
 
 **Status:** Decided · **Owner-directed 2026-08-02**

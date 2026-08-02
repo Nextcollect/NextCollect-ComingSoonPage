@@ -193,6 +193,38 @@ Deno.serve(async (req: Request) => {
       registrationPosition = existing.registration_position ?? null;
     }
 
+    // Plain-text alternative. Sending HTML-only is a deliverability penalty and unreadable
+    // in text-only clients — and this domain cannot afford deliverability penalties
+    // (see the reputation watch item in docs/PLAN.md).
+    const positionTextPlain = (() => {
+      if (!registrationPosition) {
+        return "You're now a Founder, which gives you priority access at launch and early updates on what we're building.";
+      }
+      const milestones = [100, 500, 1000, 2000, 3000, 5000, 10000];
+      for (const threshold of milestones) {
+        if (registrationPosition <= threshold) {
+          return `You're now part of the first ${threshold} helping shape the platform. You're now a Founder, which gives you priority access at launch and early updates on what we're building.`;
+        }
+      }
+      return `You're registrant #${registrationPosition}. You're now a Founder, which gives you priority access at launch and early updates on what we're building.`;
+    })();
+
+    const emailText = [
+      "Hi there,",
+      "",
+      `Thanks for signing up for NextCollect and contributing to the upcoming platform. ${positionTextPlain}`,
+      "",
+      "Want to meet other early members? Join the WhatsApp founders group:",
+      "https://chat.whatsapp.com/EngLN5KIIB7CitR2xkzaMv",
+      "",
+      "Thanks for joining us this early,",
+      "Matthijs & Rens",
+      "",
+      "---",
+      "You are receiving this email because you registered at https://www.nxtcollect.com",
+      "Questions: info@nxtcollect.com",
+    ].join("\n");
+
     // NOTE: milestone thresholds are duplicated in app/components/Hero/index.jsx (getMilestoneText)
     const positionText = (() => {
       if (!registrationPosition) {
@@ -215,7 +247,7 @@ Deno.serve(async (req: Request) => {
 <head>
   <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Welcome to our platform</title>
+  <title>Welcome to NextCollect</title>
 </head>
 <body style="margin:0; padding:0; width:100%; background-color:#ffffff;">
   <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color:#ffffff;">
@@ -297,7 +329,7 @@ Deno.serve(async (req: Request) => {
                       </tr>
                       <tr>
                         <td valign="middle" align="left">
-                          <p style="margin:0; font-family:'inter', Arial, sans-serif; font-size:17px; font-weight:600; line-height:1.4; color:#1C1B29;"> Team Nextcollect</p>
+                          <p style="margin:0; font-family:'inter', Arial, sans-serif; font-size:17px; font-weight:600; line-height:1.4; color:#1C1B29;"> Team NextCollect</p>
                         </td>
                       </tr>
                     </table>
@@ -307,7 +339,7 @@ Deno.serve(async (req: Request) => {
                   <td style="padding:22px 0px 26px 0px;" align="left">
                     <p style="margin:0 0 16px 0; font-family:'inter', Arial, sans-serif; font-size:17px; font-weight:400; line-height:1.7; color:#1C1B29;">
                       Hi there,<br /><br />
-                      Thanks for signing up for Nextcollect and contributing to the upcoming platform. ${positionText}
+                      Thanks for signing up for NextCollect and contributing to the upcoming platform. ${positionText}
                     </p>
                     <p style="margin:0; font-family:'inter', Arial, sans-serif; font-size:17px; font-weight:400; line-height:1.7; color:#1C1B29;">
                       Thanks for joining us this early,<br /><br />
@@ -355,7 +387,7 @@ Deno.serve(async (req: Request) => {
           <tr>
             <td style="padding:18px 0px 24px 0px;" align="center">
               <p style="margin:0 0 6px 0; font-family:'inter', Arial, sans-serif; font-size:13px; font-weight:400; line-height:1.5; color:#4b2dff;">
-                Copyright &copy; NEXTCOLLECT
+                Copyright &copy; NextCollect
               </p>
               <p style="margin:0; font-family:'inter', Arial, sans-serif; font-size:13px; font-weight:400; line-height:1.5; color:#4b2dff;">
                 For questions reach at <a href="mailto:info@nxtcollect.com" style="color:#4b2dff; text-decoration:underline;">info@nxtcollect.com</a>
@@ -379,8 +411,9 @@ Deno.serve(async (req: Request) => {
       body: JSON.stringify({
         from: "matthijs.email@nxtcollect.com",
         to: email,
-        subject: "Welcome to Nextcollect - You're on the Early Access List",
+        subject: "Welcome to NextCollect — You're on the Early Access List",
         html: emailBody,
+        text: emailText,
       }),
     });
 

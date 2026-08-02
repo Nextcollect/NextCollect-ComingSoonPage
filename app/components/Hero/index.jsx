@@ -333,12 +333,22 @@ export default function Hero() {
                 {getMilestoneText(registrationPosition, t)}
               </p>
             )}
+            {/* Decorative success check. Was a dotlottie player pulling a runtime from
+                unpkg.com and an asset from lottie.host — two third-party requests that
+                disclosed every visitor's IP for an aria-hidden decoration. Inline SVG +
+                CSS stroke animation needs no network, no dependency, and cannot fail
+                silently. Honours prefers-reduced-motion. */}
             <div className={styles.successCheck} aria-hidden="true">
-              <dotlottie-wc
-                class={styles.successLottie}
-                src="https://lottie.host/56c326e0-28f2-4909-b3d6-05d01ba82897/DwmTJJcvkN.lottie"
-                autoplay
-              ></dotlottie-wc>
+              <svg
+                className={styles.successCheckMark}
+                viewBox="0 0 52 52"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+                focusable="false"
+              >
+                <circle className={styles.successCheckCircle} cx="26" cy="26" r="24" />
+                <path className={styles.successCheckPath} d="M14 27l8 8 16-16" />
+              </svg>
             </div>
             <div className={styles.emailNotification}>
               <p>
