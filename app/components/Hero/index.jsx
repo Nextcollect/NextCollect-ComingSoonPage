@@ -29,7 +29,7 @@ const getMilestoneText = (position, t) => {
 };
 
 export default function Hero() {
-  const { t } = useLanguage();
+  const { t, locale } = useLanguage();
   const [email, setEmail] = useState('');
   const [country, setCountry] = useState('');
   const [message, setMessage] = useState('');
@@ -160,6 +160,8 @@ export default function Hero() {
         action: 'signup',
         email: email.trim(),
         country,
+        // Stored so the unsubscribe page can be shown in the language they signed up in.
+        locale: (locale || 'EN').toLowerCase(),
       });
 
       if (response.status === 409) {

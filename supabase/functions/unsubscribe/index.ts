@@ -45,8 +45,73 @@ function safeEqual(a: string, b: string): boolean {
   return diff === 0;
 }
 
-const PAGE = (title: string, body: string) => `<!doctype html>
-<html lang="en"><head><meta charset="utf-8"/>
+/**
+ * Copy in all six supported locales. An English-only exit wall is friction, and friction
+ * on an unsubscribe converts straight into spam complaints — the one thing this domain's
+ * reputation cannot absorb. The locale is the one captured at signup.
+ */
+type Key = "done_title" | "done_body" | "bad_title" | "bad_body" | "err_title" | "err_body" | "back";
+const COPY: Record<string, Record<Key, string>> = {
+  en: {
+    done_title: "You’ve been unsubscribed",
+    done_body: "You won’t receive further emails from NextCollect. If this was a mistake, you can sign up again at any time.",
+    bad_title: "This link isn’t valid",
+    bad_body: "The unsubscribe link is invalid or has expired.",
+    err_title: "Something went wrong",
+    err_body: "Please try again shortly, or email info@nxtcollect.com.",
+    back: "Return to NextCollect",
+  },
+  nl: {
+    done_title: "Je bent uitgeschreven",
+    done_body: "Je ontvangt geen e-mails meer van NextCollect. Was dit een vergissing? Je kunt je altijd opnieuw aanmelden.",
+    bad_title: "Deze link is niet geldig",
+    bad_body: "De afmeldlink is ongeldig of verlopen.",
+    err_title: "Er ging iets mis",
+    err_body: "Probeer het zo meteen opnieuw, of mail naar info@nxtcollect.com.",
+    back: "Terug naar NextCollect",
+  },
+  de: {
+    done_title: "Sie wurden abgemeldet",
+    done_body: "Sie erhalten keine weiteren E-Mails von NextCollect. Falls dies ein Versehen war, können Sie sich jederzeit erneut anmelden.",
+    bad_title: "Dieser Link ist ungültig",
+    bad_body: "Der Abmeldelink ist ungültig oder abgelaufen.",
+    err_title: "Etwas ist schiefgelaufen",
+    err_body: "Bitte versuchen Sie es gleich noch einmal oder schreiben Sie an info@nxtcollect.com.",
+    back: "Zurück zu NextCollect",
+  },
+  fr: {
+    done_title: "Vous êtes désinscrit",
+    done_body: "Vous ne recevrez plus d’e-mails de NextCollect. S’il s’agit d’une erreur, vous pouvez vous réinscrire à tout moment.",
+    bad_title: "Ce lien n’est pas valide",
+    bad_body: "Le lien de désinscription est invalide ou a expiré.",
+    err_title: "Une erreur est survenue",
+    err_body: "Veuillez réessayer dans un instant, ou écrivez à info@nxtcollect.com.",
+    back: "Retour à NextCollect",
+  },
+  es: {
+    done_title: "Te has dado de baja",
+    done_body: "No recibirás más correos de NextCollect. Si ha sido un error, puedes volver a registrarte cuando quieras.",
+    bad_title: "Este enlace no es válido",
+    bad_body: "El enlace para darse de baja no es válido o ha caducado.",
+    err_title: "Algo ha salido mal",
+    err_body: "Vuelve a intentarlo en un momento o escribe a info@nxtcollect.com.",
+    back: "Volver a NextCollect",
+  },
+  it: {
+    done_title: "Iscrizione annullata",
+    done_body: "Non riceverai più email da NextCollect. Se è stato un errore, puoi iscriverti di nuovo quando vuoi.",
+    bad_title: "Questo link non è valido",
+    bad_body: "Il link di annullamento non è valido o è scaduto.",
+    err_title: "Qualcosa è andato storto",
+    err_body: "Riprova tra poco oppure scrivi a info@nxtcollect.com.",
+    back: "Torna a NextCollect",
+  },
+};
+
+const copyFor = (loc: string) => COPY[loc] ?? COPY.en;
+
+const PAGE = (lang: string, title: string, body: string, back: string) => `<!doctype html>
+<html lang="${lang}"><head><meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
 <title>${title}</title>
 <style>
@@ -57,10 +122,10 @@ const PAGE = (title: string, body: string) => `<!doctype html>
   a{color:#470FF4}
 </style></head>
 <body><main><h1>${title}</h1><p>${body}</p>
-<p><a href="https://www.nxtcollect.com">Return to NextCollect</a></p></main></body></html>`;
+<p><a href="https://www.nxtcollect.com">${back}</a></p></main></body></html>`;
 
-const html = (status: number, title: string, body: string) =>
-  new Response(PAGE(title, body), {
+const html = (status: number, lang: string, title: string, body: string, back: string) =>
+  new Response(PAGE(lang, title, body, back), {
     status,
     headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store" },
   });
@@ -80,9 +145,21 @@ Deno.serve(async (req: Request) => {
 
     if (!email || !token || !safeEqual(token, await expectedToken(email))) {
       // Deliberately identical wording whether the address is unknown or the token is
-      // wrong — distinguishing them would confirm membership.
-      return html(400, "This link isn’t valid", "The unsubscribe link is invalid or has expired.");
+      // wrong — distinguishing them would confirm membership. English here because an
+      // invalid token means we cannot trust any locale lookup either.
+      const c = COPY.en;
+      return html(400, "en", c.bad_title, c.bad_body, c.back);
     }
+
+    // Read the locale captured at signup so the page speaks their language.
+    const { data: row } = await supabase
+      .from("nextcollect_registration_records")
+      .select("locale")
+      .eq("email", email)
+      .maybeSingle();
+
+    const lang = row?.locale && COPY[row.locale] ? row.locale : "en";
+    const c = copyFor(lang);
 
     const { error } = await supabase
       .from("nextcollect_registration_records")
@@ -92,7 +169,7 @@ Deno.serve(async (req: Request) => {
 
     if (error) {
       console.error("Unsubscribe failed:", error);
-      return html(503, "Something went wrong", "Please try again shortly, or email support@nxtcollect.com.");
+      return html(503, lang, c.err_title, c.err_body, c.back);
     }
 
     // RFC 8058: the one-click POST expects a 200 and no interactive content.
@@ -100,13 +177,13 @@ Deno.serve(async (req: Request) => {
       return new Response(null, { status: 200 });
     }
 
-    return html(
-      200,
-      "You’ve been unsubscribed",
-      "You won’t receive further emails from NextCollect. If this was a mistake, you can sign up again at any time.",
-    );
+    // Idempotent by design: a valid token always shows "unsubscribed", whether this
+    // request changed anything or the address was already opted out. Reporting "you
+    // weren't subscribed" would be an unnecessary membership signal.
+    return html(200, lang, c.done_title, c.done_body, c.back);
   } catch (err) {
     console.error("Error in unsubscribe:", err);
-    return html(500, "Something went wrong", "Please try again shortly.");
+    const c = COPY.en;
+    return html(500, "en", c.err_title, c.err_body, c.back);
   }
 });

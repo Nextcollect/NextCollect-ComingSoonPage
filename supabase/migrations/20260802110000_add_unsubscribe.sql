@@ -21,6 +21,38 @@ COMMENT ON COLUMN public.nextcollect_registration_records.unsubscribed_at IS
   'Soft opt-out so registration_position ordinals stay stable; GDPR erasure is a hard delete.';
 
 /*
+  Locale captured at signup.
+
+  Needed so the unsubscribe page can be shown in the language the person actually signed up
+  in. An English-only exit wall is friction, and friction on an unsubscribe converts directly
+  into spam complaints — which this domain cannot afford (see the reputation watch item in
+  docs/PLAN.md). It also lets the confirmation email be localised later.
+
+  CHECK constrains it to the six supported locales, so a bad value fails at the boundary
+  rather than silently rendering English.
+*/
+ALTER TABLE public.nextcollect_registration_records
+  ADD COLUMN IF NOT EXISTS locale text NOT NULL DEFAULT 'en';
+
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint
+    WHERE conname = 'nextcollect_registration_records_locale_check'
+  ) THEN
+    ALTER TABLE public.nextcollect_registration_records
+      ADD CONSTRAINT nextcollect_registration_records_locale_check
+      CHECK (locale IN ('en', 'nl', 'de', 'fr', 'es', 'it'));
+  END IF;
+END $$;
+
+COMMENT ON COLUMN public.nextcollect_registration_records.locale IS
+  'Language the person signed up in, used for the unsubscribe page and future localised email.';
+
+/*
   ROLLBACK:
+    ALTER TABLE public.nextcollect_registration_records
+      DROP CONSTRAINT IF EXISTS nextcollect_registration_records_locale_check;
+    ALTER TABLE public.nextcollect_registration_records DROP COLUMN IF EXISTS locale;
     ALTER TABLE public.nextcollect_registration_records DROP COLUMN IF EXISTS unsubscribed_at;
 */

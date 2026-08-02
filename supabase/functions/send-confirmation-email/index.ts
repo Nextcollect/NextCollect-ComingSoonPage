@@ -59,6 +59,9 @@ const EUROPEAN_COUNTRIES = [
   "Slovenia", "Spain", "Sweden", "United Kingdom", "Switzerland", "Norway",
 ];
 
+// Must match the CHECK constraint in migration 20260802110000 and the files in app/i18n/.
+const SUPPORTED_LOCALES = ["en", "nl", "de", "fr", "es", "it"];
+
 Deno.serve(async (req: Request) => {
   const origin = req.headers.get("origin") ?? "";
   const corsHeaders = getCorsHeaders(origin);
@@ -84,6 +87,10 @@ Deno.serve(async (req: Request) => {
     const email = typeof body.email === "string" ? body.email.trim() : "";
     const country = typeof body.country === "string" ? body.country.trim() : "";
     const action = body.action === "resend" ? "resend" : "signup";
+    // Unrecognised locale falls back to English rather than failing the signup — a bad
+    // locale must never cost someone their registration.
+    const rawLocale = typeof body.locale === "string" ? body.locale.trim().toLowerCase() : "";
+    const locale = SUPPORTED_LOCALES.includes(rawLocale) ? rawLocale : "en";
 
     if (!email || email.length > MAX_EMAIL_LENGTH || !EMAIL_RE.test(email)) {
       return new Response(
@@ -148,7 +155,7 @@ Deno.serve(async (req: Request) => {
 
       const { data: inserted, error: insertError } = await supabase
         .from("nextcollect_registration_records")
-        .insert({ email, country, registration_position: nextPosition })
+        .insert({ email, country, locale, registration_position: nextPosition })
         .select("registration_position")
         .maybeSingle();
 
@@ -444,7 +451,14 @@ Deno.serve(async (req: Request) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        from: "matthijs.email@nxtcollect.com",
+        // Role address, not a personal mailbox: automated mail must not depend on one
+        // person's inbox and must not break when someone leaves.
+        // Display name is the brand, not a person — recognition is what prevents spam
+        // complaints, and a recipient who signed up seconds ago must know who this is.
+        // No reply_to: it would be identical to `from` and therefore pure noise.
+        // Was matthijs.email@ — a local part with no matching mailbox (dots are
+        // significant per RFC 5321 §2.4), so replies to earlier sends went nowhere.
+        from: "NextCollect <info@nxtcollect.com>",
         to: email,
         subject: "Welcome to NextCollect — You're on the Early Access List",
         html: emailBody,
