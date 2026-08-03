@@ -464,7 +464,32 @@ remains possible; revisit immediately after launch.
 **Must-fix before production:** C-ENV · C2 · C-OPS · C3 · D1–D5 · E1 · E2 · E5 · G1–G4 · I.
 **Nice-to-have:** C1/C5 (trivial) · E3 · E4 · E6 · F (except F6) · G5–G11.
 
-### ⚠ ACTION RECOMMENDED — rotate `RESEND_API_KEY` (Vercel April 2026 incident)
+### ✅ DONE 2026-08-03 — `RESEND_API_KEY` rotated **precautionarily**
+
+**Framing matters and must not drift in retelling: this was NOT a confirmed compromise.**
+The Vercel April 2026 incident is established; **this account being in scope is not**, and the
+meaning of Vercel's "Needs Attention" badge is **inferred, not documented**. The key was rotated
+because the cost was minutes and the downside of being wrong was disproportionate — not because
+exposure was proven. Do not let a future reader record this as a breach.
+
+Completed: old key deleted in Resend (delete is Resend's equivalent of revoke), replacement
+`Nextcollect-ComingSoonPage-v2` created with Sending access, `supabase secrets set` +
+`functions deploy` done. Verified via MCP 2026-08-03: **exactly one key exists**, the v2 key.
+Not re-added to Vercel — the Next app never reads it.
+
+### HYGIENE — rotate again after launch settles
+
+Two credentials have been exposed to local terminal output and shell history in plaintext during
+this work:
+- the **new** `RESEND_API_KEY` (v2)
+- the **Supabase DB password** (used for `db push` / `migration repair`)
+
+Neither is treated as compromised — this is local shell history, not a public disclosure. But
+plaintext in `~/.zsh_history` is a credential lying around indefinitely on a developer machine.
+**Rotate both once launch has settled**, and prefer a leading space or a secrets manager when
+setting them in future so they never enter history. Low urgency, real hygiene.
+
+### Original assessment (retained for reasoning)
 
 Raised 2026-08-03: `RESEND_API_KEY` carried a **"Needs Attention"** badge in Vercel before being
 deleted. Investigated rather than dismissed, and the timeline is uncomfortable.
@@ -513,6 +538,12 @@ Supabase now offers `sb_publishable_…` / `sb_secret_…` alongside the legacy 
 **Mapping:** `sb_publishable_…` replaces `anon`; `sb_secret_…` replaces `service_role`. So yes —
 `SUPABASE_SERVICE_ROLE_KEY` (used by both edge functions) needs migrating too, not just the
 browser key.
+
+> ### ⚠ THE KEY MIGRATION MUST ALSO UPDATE `scripts/check-env.mjs`
+> This is not optional cleanup. Swapping in a publishable key **without** changing the guard
+> silently removes the URL/key consistency check — the build keeps passing and nobody is told.
+> Treat the guard edit as part of the migration, in the same change, or the migration quietly
+> weakens the one control that would have caught D-012.
 
 **What the build guard needs — and a correction to the obvious assumption.** The guard extracts
 the project ref from the anon key's JWT payload. A publishable key is **not a JWT and carries no
