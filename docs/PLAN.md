@@ -464,6 +464,72 @@ remains possible; revisit immediately after launch.
 **Must-fix before production:** C-ENV · C2 · C-OPS · C3 · D1–D5 · E1 · E2 · E5 · G1–G4 · I.
 **Nice-to-have:** C1/C5 (trivial) · E3 · E4 · E6 · F (except F6) · G5–G11.
 
+### ⚠ ACTION RECOMMENDED — rotate `RESEND_API_KEY` (Vercel April 2026 incident)
+
+Raised 2026-08-03: `RESEND_API_KEY` carried a **"Needs Attention"** badge in Vercel before being
+deleted. Investigated rather than dismissed, and the timeline is uncomfortable.
+
+**What is established:**
+- A **Vercel security incident in April 2026** exposed customer environment variables that were
+  **not marked "Sensitive"** in the dashboard. Public guidance after it was to treat any such
+  credential as potentially exposed and rotate it.
+- `RESEND_API_KEY` was present in Vercel across **all three environments**, created ~2026-03-07
+  (148 days old when read on 2026-08-02) — i.e. **it was in Vercel throughout the April 2026
+  window** — and it was not marked Sensitive.
+
+**What is NOT established:** whether this account was in scope of that incident, and the exact
+meaning of Vercel's "Needs Attention" badge (not clearly documented; the plausible reading is
+"credential-shaped value not marked Sensitive").
+
+**Why this is different from D-009.** D-009 concerns *anon* keys, which are public by design —
+there was nothing to rotate. `RESEND_API_KEY` is a **real secret**: anyone holding it can send
+mail as `nxtcollect.com` from your verified domain. On a domain whose reputation is already
+fragile (4 of 7 lifetime sends were a bounce or complaint), a spam run using it would be very
+hard to recover from.
+
+**Recommendation: rotate it.** Cost is minutes; the downside of not rotating a possibly-exposed
+sending credential is disproportionate.
+```
+Resend dashboard → API Keys → revoke "Nextcollect-ComingSoonPage", create a replacement
+supabase secrets set RESEND_API_KEY='<new key>'
+supabase functions deploy send-confirmation-email
+```
+Then confirm a signup still sends. **Do not re-add it to Vercel** — the Next app never reads it
+(verified: zero references in `app/`); the edge function reads its own copy from Supabase secrets.
+
+### WEEK TWO — migrate off legacy JWT API keys
+
+Supabase now offers `sb_publishable_…` / `sb_secret_…` alongside the legacy `anon` /
+`service_role` JWT keys. **The legacy keys are correct for now** — this is deferred, not ignored.
+
+**Deprecation timeline (checked 2026-08-03, not assumed):**
+- Legacy JWT-based keys are **deprecated and scheduled for deletion at the end of 2026**. After
+  that they stop working.
+- Projects created or restored since **1 Nov 2025** no longer get `anon`/`service_role` at all.
+  This project predates that, which is why it still has them.
+- Both key types work **simultaneously**, so clients can be migrated one at a time and the legacy
+  keys deactivated only once nothing depends on them. There is no big-bang cutover.
+
+**Mapping:** `sb_publishable_…` replaces `anon`; `sb_secret_…` replaces `service_role`. So yes —
+`SUPABASE_SERVICE_ROLE_KEY` (used by both edge functions) needs migrating too, not just the
+browser key.
+
+**What the build guard needs — and a correction to the obvious assumption.** The guard extracts
+the project ref from the anon key's JWT payload. A publishable key is **not a JWT and carries no
+ref claim**, so that cross-check cannot survive the migration. But it would **not break the
+build**: `scripts/check-env.mjs` only attempts the parse when the key splits into three parts,
+otherwise it warns and continues. **It degrades silently, which is worse than failing** — the
+URL check would still run, but the "URL and key belong to the same project" check would quietly
+stop existing. When migrating, either drop that check deliberately (documented), or pin an
+expected key prefix instead. The URL check is the load-bearing half — it is what would have
+caught D-012.
+
+**Security difference that matters here:** the practical gain is revocability. Legacy keys are
+derived from the project's JWT secret, so rotating one means rotating the secret and invalidating
+everything; publishable/secret keys can be revoked and replaced individually. For this project —
+no auth, one service-role consumer — that is a maintenance improvement, not a vulnerability fix.
+Nothing about the current setup is insecure because of legacy keys.
+
 ### NOT A BUG — the position number is deliberately invisible below 10,000
 
 `getMilestoneText` (`app/components/Hero/index.jsx`) buckets the position rather than showing
