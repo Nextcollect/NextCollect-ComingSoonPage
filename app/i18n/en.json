@@ -33,7 +33,9 @@
     "error_try_again": "There was an issue with this entry. Please try again.",
     "error_unavailable": "We couldn't reach the signup service. Please try again in a moment.",
     "error_generic": "Something went wrong. Please try again.",
-    "error_resend": "Failed to resend. Please try again."
+    "error_resend": "Failed to resend. Please try again.",
+    "consent": "We'll store your email and country to send you a confirmation now and one announcement at launch — nothing else. Unsubscribe any time.",
+    "privacy_link": "Privacy"
   },
   "success": {
     "title": "You're in the list",

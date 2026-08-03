@@ -33,7 +33,9 @@
     "error_try_again": "Une erreur s'est produite. Veuillez réessayer.",
     "error_unavailable": "Nous n'avons pas pu joindre le service d'inscription. Veuillez réessayer dans un instant.",
     "error_generic": "Quelque chose s'est mal passé. Veuillez réessayer.",
-    "error_resend": "Échec du renvoi. Veuillez réessayer."
+    "error_resend": "Échec du renvoi. Veuillez réessayer.",
+    "consent": "Nous conservons votre e-mail et pays pour une confirmation maintenant et une annonce au lancement — rien d'autre. Désinscription à tout moment.",
+    "privacy_link": "Confidentialité"
   },
   "success": {
     "title": "Vous êtes sur la liste",

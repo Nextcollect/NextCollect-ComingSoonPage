@@ -33,7 +33,9 @@
     "error_try_again": "Er was een probleem met dit formulier. Probeer het opnieuw.",
     "error_unavailable": "We konden de aanmeldservice niet bereiken. Probeer het zo meteen opnieuw.",
     "error_generic": "Er is iets misgegaan. Probeer het opnieuw.",
-    "error_resend": "Opnieuw verzenden mislukt. Probeer het opnieuw."
+    "error_resend": "Opnieuw verzenden mislukt. Probeer het opnieuw.",
+    "consent": "We bewaren je e-mailadres en land om je nu een bevestiging te sturen en één aankondiging bij de lancering — meer niet. Afmelden kan altijd.",
+    "privacy_link": "Privacy"
   },
   "success": {
     "title": "Je staat op de lijst",

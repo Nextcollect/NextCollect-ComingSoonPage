@@ -33,7 +33,9 @@
     "error_try_again": "Hubo un problema. Por favor, inténtalo de nuevo.",
     "error_unavailable": "No pudimos conectar con el servicio de registro. Vuelve a intentarlo en un momento.",
     "error_generic": "Algo salió mal. Por favor, inténtalo de nuevo.",
-    "error_resend": "Error al reenviar. Por favor, inténtalo de nuevo."
+    "error_resend": "Error al reenviar. Por favor, inténtalo de nuevo.",
+    "consent": "Guardamos tu correo y país para enviarte una confirmación ahora y un aviso en el lanzamiento — nada más. Puedes darte de baja cuando quieras.",
+    "privacy_link": "Privacidad"
   },
   "success": {
     "title": "Estás en la lista",

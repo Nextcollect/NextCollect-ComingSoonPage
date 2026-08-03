@@ -33,7 +33,9 @@
     "error_try_again": "Si è verificato un problema. Riprova.",
     "error_unavailable": "Non siamo riusciti a contattare il servizio di iscrizione. Riprova tra un momento.",
     "error_generic": "Qualcosa è andato storto. Riprova.",
-    "error_resend": "Reinvio non riuscito. Riprova."
+    "error_resend": "Reinvio non riuscito. Riprova.",
+    "consent": "Conserviamo email e paese per inviarti una conferma ora e un annuncio al lancio — nient'altro. Puoi disiscriverti quando vuoi.",
+    "privacy_link": "Privacy"
   },
   "success": {
     "title": "Sei nella lista",

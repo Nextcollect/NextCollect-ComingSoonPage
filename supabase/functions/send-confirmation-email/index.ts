@@ -256,7 +256,7 @@ Deno.serve(async (req: Request) => {
       "https://chat.whatsapp.com/EngLN5KIIB7CitR2xkzaMv",
       "",
       "Thanks for joining us this early,",
-      "Matthijs & Rens",
+      "Team NextCollect",
       "",
       "---",
       "You are receiving this email because you registered at https://www.nxtcollect.com",
@@ -359,22 +359,6 @@ Deno.serve(async (req: Request) => {
                   </td>
                 </tr>
                 <tr>
-                  <td style="padding:10px 0px 8px 0px;">
-                    <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
-                      <tr>
-                        <td valign="middle" width="52" style="padding-right:12px; padding-bottom: 10px;">
-                          <img src="https://www.nxtcollect.com/img/Nextcollect_Welcomes_Email_Profile-Images_v03.png" alt="Team NextCollect" width="125" style="display:block; width:125px; height:auto; outline:none; text-decoration:none;" />
-                        </td>
-                      </tr>
-                      <tr>
-                        <td valign="middle" align="left">
-                          <p style="margin:0; font-family:'inter', Arial, sans-serif; font-size:17px; font-weight:600; line-height:1.4; color:#1C1B29;"> Team NextCollect</p>
-                        </td>
-                      </tr>
-                    </table>
-                  </td>
-                </tr>
-                <tr>
                   <td style="padding:22px 0px 26px 0px;" align="left">
                     <p style="margin:0 0 16px 0; font-family:'inter', Arial, sans-serif; font-size:17px; font-weight:400; line-height:1.7; color:#1C1B29;">
                       Hi there,<br /><br />
@@ -382,7 +366,7 @@ Deno.serve(async (req: Request) => {
                     </p>
                     <p style="margin:0; font-family:'inter', Arial, sans-serif; font-size:17px; font-weight:400; line-height:1.7; color:#1C1B29;">
                       Thanks for joining us this early,<br /><br />
-                      Matthijs & Rens
+                      Team NextCollect
                     </p>
                   </td>
                 </tr>

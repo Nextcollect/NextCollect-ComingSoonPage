@@ -473,3 +473,25 @@
     padding: var(--space-10) var(--space-8) var(--space-8);
   }
 }
+
+/* Consent notice above the submit button. Deliberately small and unobtrusive —
+   it must be readable without dominating the form. The four longest locales were
+   tightened so this stays two lines rather than a wall of text. */
+.consent {
+  margin: 0 0 var(--space-3);
+  max-width: 480px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--white);
+  opacity: 0.85;
+}
+
+.consentLink {
+  color: var(--white);
+  text-decoration: underline;
+}
+
+.consentLink:focus-visible {
+  outline: 2px solid var(--white);
+  outline-offset: 2px;
+}
