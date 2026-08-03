@@ -44,5 +44,14 @@
     "resend": "Reinvia email",
     "milestone_first": "Ora fai parte dei primi {threshold} che stanno dando forma alla piattaforma",
     "milestone_number": "Sei il registrato #{position}"
+  },
+  "unsubscribe": {
+    "title_ok": "Iscrizione annullata",
+    "body_ok": "Non riceverai più email da NextCollect. Se è stato un errore, puoi iscriverti di nuovo quando vuoi.",
+    "title_invalid": "Questo link non è valido",
+    "body_invalid": "Il link di annullamento non è valido o è scaduto.",
+    "title_error": "Qualcosa è andato storto",
+    "body_error": "Riprova tra poco oppure scrivi a info@nxtcollect.com.",
+    "back": "Torna a NextCollect"
   }
 }

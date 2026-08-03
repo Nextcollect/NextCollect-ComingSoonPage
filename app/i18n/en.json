@@ -44,5 +44,14 @@
     "resend": "Resend email",
     "milestone_first": "You're now part of the first {threshold} helping shape the platform",
     "milestone_number": "You're registrant #{position}"
+  },
+  "unsubscribe": {
+    "title_ok": "You’ve been unsubscribed",
+    "body_ok": "You won’t receive further emails from NextCollect. If this was a mistake, you can sign up again at any time.",
+    "title_invalid": "This link isn’t valid",
+    "body_invalid": "The unsubscribe link is invalid or has expired.",
+    "title_error": "Something went wrong",
+    "body_error": "Please try again shortly, or email info@nxtcollect.com.",
+    "back": "Return to NextCollect"
   }
 }

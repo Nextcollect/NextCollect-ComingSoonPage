@@ -44,5 +44,14 @@
     "resend": "E-mail opnieuw verzenden",
     "milestone_first": "Je behoort nu tot de eerste {threshold} die het platform helpen vormgeven",
     "milestone_number": "Je bent registrant #{position}"
+  },
+  "unsubscribe": {
+    "title_ok": "Je bent uitgeschreven",
+    "body_ok": "Je ontvangt geen e-mails meer van NextCollect. Was dit een vergissing? Je kunt je altijd opnieuw aanmelden.",
+    "title_invalid": "Deze link is niet geldig",
+    "body_invalid": "De afmeldlink is ongeldig of verlopen.",
+    "title_error": "Er ging iets mis",
+    "body_error": "Probeer het zo meteen opnieuw, of mail naar info@nxtcollect.com.",
+    "back": "Terug naar NextCollect"
   }
 }

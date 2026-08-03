@@ -44,5 +44,14 @@
     "resend": "Reenviar correo",
     "milestone_first": "Ahora eres parte de los primeros {threshold} en dar forma a la plataforma",
     "milestone_number": "Eres el registrado #{position}"
+  },
+  "unsubscribe": {
+    "title_ok": "Te has dado de baja",
+    "body_ok": "No recibirás más correos de NextCollect. Si ha sido un error, puedes volver a registrarte cuando quieras.",
+    "title_invalid": "Este enlace no es válido",
+    "body_invalid": "El enlace para darse de baja no es válido o ha caducado.",
+    "title_error": "Algo ha salido mal",
+    "body_error": "Vuelve a intentarlo en un momento o escribe a info@nxtcollect.com.",
+    "back": "Volver a NextCollect"
   }
 }

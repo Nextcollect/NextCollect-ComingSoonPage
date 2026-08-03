@@ -44,5 +44,14 @@
     "resend": "Renvoyer l'e-mail",
     "milestone_first": "Vous faites maintenant partie des {threshold} premiers à façonner la plateforme",
     "milestone_number": "Vous êtes le registrant #{position}"
+  },
+  "unsubscribe": {
+    "title_ok": "Vous êtes désinscrit",
+    "body_ok": "Vous ne recevrez plus d’e-mails de NextCollect. S’il s’agit d’une erreur, vous pouvez vous réinscrire à tout moment.",
+    "title_invalid": "Ce lien n’est pas valide",
+    "body_invalid": "Le lien de désinscription est invalide ou a expiré.",
+    "title_error": "Une erreur est survenue",
+    "body_error": "Veuillez réessayer dans un instant, ou écrivez à info@nxtcollect.com.",
+    "back": "Retour à NextCollect"
   }
 }
