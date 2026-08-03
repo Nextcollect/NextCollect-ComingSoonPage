@@ -13,6 +13,12 @@
   font-family: var(--font-family-base);
 }
 
+.logo {
+  width: 180px;
+  height: auto;
+  margin-bottom: var(--space-4);
+}
+
 .title {
   margin: 0;
   font-size: clamp(24px, 4vw, 32px);

@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import Image from 'next/image';
 import styles from './styles.module.css';
 
 import en from '../i18n/en.json';
@@ -46,6 +47,20 @@ export default async function UnsubscribedPage({ searchParams }) {
 
   return (
     <main className={styles.wrap} lang={lang}>
+      {/* Logo but deliberately NO navbar. Someone arriving from an email needs to see
+          instantly that they are in the right place — an unbranded page of bare text reads
+          as an error or a phishing landing, which is the impression that sends people to
+          the spam button. The navbar is a different matter: it carries a "Get Early Access"
+          CTA and a language switcher, and showing a signup CTA to someone who just left is
+          tone-deaf, while the language is already resolved from their stored locale. */}
+      <Image
+        src="/img/nextcollect_Logo_full-color.svg"
+        alt="NextCollect"
+        width={180}
+        height={19}
+        className={styles.logo}
+        priority
+      />
       <h1 className={styles.title}>{copy[`title_${status}`]}</h1>
       <p className={styles.body}>{copy[`body_${status}`]}</p>
       <Link className={styles.back} href="/">

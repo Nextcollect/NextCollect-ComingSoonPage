@@ -464,6 +464,37 @@ remains possible; revisit immediately after launch.
 **Must-fix before production:** C-ENV · C2 · C-OPS · C3 · D1–D5 · E1 · E2 · E5 · G1–G4 · I.
 **Nice-to-have:** C1/C5 (trivial) · E3 · E4 · E6 · F (except F6) · G5–G11.
 
+### NOT A BUG — the position number is deliberately invisible below 10,000
+
+`getMilestoneText` (`app/components/Hero/index.jsx`) buckets the position rather than showing
+it: any position ≤ 100 renders "you're part of the first **100**", ≤ 500 → "first 500", and so
+on. A bare "you're registrant #N" only appears **above 10,000**. The same bucketing is
+duplicated in the edge function's `positionText`.
+
+**So no real signup will see their actual number for a long time.** That is a copy decision —
+"you're in the first 100" reads better than "you're #3" — not a defect.
+
+**Why this is recorded:** the ordinal work (dropping the gappy sequence, computing `count(*)+1`
+at insert time, migration `20260802100100`) is correct and the number *is* stored honestly —
+verified: the first test signup got position 1. But because it is never displayed at these
+volumes, a future reader could conclude the ordinal is broken and "fix" something that works.
+It isn't broken. It is just not shown yet.
+
+Still applies: the `COALESCE(MAX(...),0)+1` change must land with the D4 deletion path, since
+the stored value is what matters even when unseen.
+
+### DESIGN DECISION — the unsubscribe page has a logo but no navbar
+
+Deliberate, not an oversight. The logo is there because someone arriving from an email must
+see instantly that they are in the right place; an unbranded page of bare text reads as an
+error or a phishing landing, which is precisely the impression that pushes people to the spam
+button instead.
+
+The navbar is deliberately absent: it carries a "Get Early Access" CTA and a language
+switcher. Showing a signup CTA to someone who has just unsubscribed is tone-deaf, and the
+language is already resolved from their stored locale, so the switcher would only invite them
+to change it.
+
 ### WATCH AT LAUNCH — sender domain reputation
 
 `nxtcollect.com` has a poor ratio on almost no volume. As of 2026-08-02, **7 sends total**:
