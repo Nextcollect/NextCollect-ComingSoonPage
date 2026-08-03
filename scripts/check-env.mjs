@@ -18,7 +18,26 @@
  *
  * Runs via the `prebuild` npm hook, so it gates `npm run build` locally and on Vercel.
  * No network calls: hermetic and fast.
+ *
+ * WHY IT LOADS ENV VIA @next/env
+ * This runs as a bare node process, and node does NOT read .env files — only Next does,
+ * during `next build`. Without this, the guard failed locally even with a perfectly correct
+ * .env, while passing on Vercel (where vars come from the real environment). A check that
+ * cries wolf locally is worse than no check: it trains people to bypass it.
+ *
+ * @next/env is Next's own loader, already installed as a Next dependency. Using it means the
+ * guard sees exactly what the build will see — same files, same precedence
+ * (.env.local > .env), and process.env still wins, so Vercel behaviour is unchanged.
  */
+
+// @next/env is CommonJS, so it must be imported as a default and destructured —
+// `import { loadEnvConfig }` throws under ESM.
+import nextEnv from '@next/env';
+const { loadEnvConfig } = nextEnv;
+
+// Matches `next build`: reads .env* from the project root, without overriding anything
+// already present in process.env.
+loadEnvConfig(process.cwd(), /* dev */ false, { info: () => {}, error: () => {} });
 
 const EXPECTED_REF = 'nofzyhxjpsikdhbcpfuo';
 
