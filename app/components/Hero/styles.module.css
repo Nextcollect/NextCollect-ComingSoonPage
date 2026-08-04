@@ -487,8 +487,11 @@
    it must be readable without dominating the form. The four longest locales were
    tightened so this stays two lines rather than a wall of text. */
 .consent {
-  margin: 0 0 var(--space-3);
-  max-width: 480px;
+  /* Sits after </form>, not inside it — see the comment in index.jsx. margin-top pairs it
+     visually with the form it describes; max-width keeps it to a readable measure rather
+     than stretching across the full hero card. */
+  margin: var(--space-4) 0 0;
+  max-width: 560px;
   font-size: 13px;
   line-height: 1.5;
   color: var(--white);
