@@ -231,6 +231,56 @@ jurisdiction and data profile. Corrected by the owner.
 
 ---
 
+### ⬇ DOWNGRADED 2026-08-03 — reduced scope, deliberately. NOT overlooked.
+
+**Status of the downgrade: Decided · Owner-directed.**
+
+**Context that changed.** This is a practice/school project. There is **no company, no
+incorporation, no budget**, and the owner will not publish a home address — which a formal
+privacy policy requires, since GDPR mandates publishable controller contact details.
+
+**Decision.** The formal privacy policy and the controller-identity requirement are **dropped**.
+Replaced with a proportionate minimum, at zero cost and with no address published:
+1. A **consent line** above the submit button, in all six languages.
+2. A short **plain-language `/privacy` notice** — what is collected, why, which processors, how
+   long, and how to be removed. No boilerplate, no postal address, no registration number.
+3. **Linked** from the footer and next to the form.
+
+**What this genuinely achieves (~80% of the practical value).** Consent is captured at the point
+it actually happens, in the user's own language; the data profile is disclosed honestly; the
+unsubscribe path already works. The data collected is minimal by design — email, country,
+locale — with no analytics, no cookies, and Resend open/click tracking off.
+
+**What is knowingly given up — recorded so it is not mistaken for an oversight:**
+- No identifiable controller. **A user cannot tell who is legally responsible for their data.**
+  This is the real cost of the downgrade, mitigated only partly by naming the two people running
+  it and giving a contact address.
+- No stated supervisory-authority complaint route (GDPR Art. 13(2)(d)).
+- No explicit enumeration of data-subject rights (access, rectification, portability, objection).
+- No international-transfer safeguards, despite Vercel and Resend being US companies.
+
+**Three wording traps identified while drafting — the notice MUST avoid all three:**
+1. **Unsubscribe ≠ deletion.** Unsubscribe is a *soft* opt-out (`unsubscribed_at`); the row
+   remains. Saying it removes the data would be false. The notice separates them explicitly.
+2. **Do not describe a company that does not exist.** Branding as NextCollect is fine; implying
+   corporate status is not. Professional tone and claiming incorporation are different things.
+3. **Do not promise a retention period without a mechanism to honour it.** "Launch + 6 months"
+   is only honest if someone actually deletes.
+
+**If this becomes a real product, the full version is revisited** — controller identity, formal
+policy, rights enumeration, transfer safeguards, and six-language translation of the policy
+itself. `GDPR-INVENTORY.md` §3 already holds the complete factual input for that, so the
+expensive part is done and does not need redoing.
+
+**Rejected — shipping nothing.** The site is publicly live on a real domain and sends real email
+to real people. "It's only a school project" does not make that untrue.
+
+**Rejected — a generator or lawyer-reviewed policy.** Correct for a real product; disproportionate
+here, and both routes require the controller identity and address that the owner is
+(reasonably) unwilling to publish.
+
+---
+
 ## D-006 — Finish the existing design system; do not build a new one
 
 **Status:** Decided

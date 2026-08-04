@@ -464,6 +464,134 @@ remains possible; revisit immediately after launch.
 **Must-fix before production:** C-ENV · C2 · C-OPS · C3 · D1–D5 · E1 · E2 · E5 · G1–G4 · I.
 **Nice-to-have:** C1/C5 (trivial) · E3 · E4 · E6 · F (except F6) · G5–G11.
 
+### ✅ DONE 2026-08-03 — `RESEND_API_KEY` rotated **precautionarily**
+
+**Framing matters and must not drift in retelling: this was NOT a confirmed compromise.**
+The Vercel April 2026 incident is established; **this account being in scope is not**, and the
+meaning of Vercel's "Needs Attention" badge is **inferred, not documented**. The key was rotated
+because the cost was minutes and the downside of being wrong was disproportionate — not because
+exposure was proven. Do not let a future reader record this as a breach.
+
+Completed: old key deleted in Resend (delete is Resend's equivalent of revoke), replacement
+`Nextcollect-ComingSoonPage-v2` created with Sending access, `supabase secrets set` +
+`functions deploy` done. Verified via MCP 2026-08-03: **exactly one key exists**, the v2 key.
+Not re-added to Vercel — the Next app never reads it.
+
+### HYGIENE — rotate again after launch settles
+
+Two credentials have been exposed to local terminal output and shell history in plaintext during
+this work:
+- the **new** `RESEND_API_KEY` (v2)
+- the **Supabase DB password** (used for `db push` / `migration repair`)
+
+Neither is treated as compromised — this is local shell history, not a public disclosure. But
+plaintext in `~/.zsh_history` is a credential lying around indefinitely on a developer machine.
+**Rotate both once launch has settled**, and prefer a leading space or a secrets manager when
+setting them in future so they never enter history. Low urgency, real hygiene.
+
+### Original assessment (retained for reasoning)
+
+Raised 2026-08-03: `RESEND_API_KEY` carried a **"Needs Attention"** badge in Vercel before being
+deleted. Investigated rather than dismissed, and the timeline is uncomfortable.
+
+**What is established:**
+- A **Vercel security incident in April 2026** exposed customer environment variables that were
+  **not marked "Sensitive"** in the dashboard. Public guidance after it was to treat any such
+  credential as potentially exposed and rotate it.
+- `RESEND_API_KEY` was present in Vercel across **all three environments**, created ~2026-03-07
+  (148 days old when read on 2026-08-02) — i.e. **it was in Vercel throughout the April 2026
+  window** — and it was not marked Sensitive.
+
+**What is NOT established:** whether this account was in scope of that incident, and the exact
+meaning of Vercel's "Needs Attention" badge (not clearly documented; the plausible reading is
+"credential-shaped value not marked Sensitive").
+
+**Why this is different from D-009.** D-009 concerns *anon* keys, which are public by design —
+there was nothing to rotate. `RESEND_API_KEY` is a **real secret**: anyone holding it can send
+mail as `nxtcollect.com` from your verified domain. On a domain whose reputation is already
+fragile (4 of 7 lifetime sends were a bounce or complaint), a spam run using it would be very
+hard to recover from.
+
+**Recommendation: rotate it.** Cost is minutes; the downside of not rotating a possibly-exposed
+sending credential is disproportionate.
+```
+Resend dashboard → API Keys → revoke "Nextcollect-ComingSoonPage", create a replacement
+supabase secrets set RESEND_API_KEY='<new key>'
+supabase functions deploy send-confirmation-email
+```
+Then confirm a signup still sends. **Do not re-add it to Vercel** — the Next app never reads it
+(verified: zero references in `app/`); the edge function reads its own copy from Supabase secrets.
+
+### WEEK TWO — migrate off legacy JWT API keys
+
+Supabase now offers `sb_publishable_…` / `sb_secret_…` alongside the legacy `anon` /
+`service_role` JWT keys. **The legacy keys are correct for now** — this is deferred, not ignored.
+
+**Deprecation timeline (checked 2026-08-03, not assumed):**
+- Legacy JWT-based keys are **deprecated and scheduled for deletion at the end of 2026**. After
+  that they stop working.
+- Projects created or restored since **1 Nov 2025** no longer get `anon`/`service_role` at all.
+  This project predates that, which is why it still has them.
+- Both key types work **simultaneously**, so clients can be migrated one at a time and the legacy
+  keys deactivated only once nothing depends on them. There is no big-bang cutover.
+
+**Mapping:** `sb_publishable_…` replaces `anon`; `sb_secret_…` replaces `service_role`. So yes —
+`SUPABASE_SERVICE_ROLE_KEY` (used by both edge functions) needs migrating too, not just the
+browser key.
+
+> ### ⚠ THE KEY MIGRATION MUST ALSO UPDATE `scripts/check-env.mjs`
+> This is not optional cleanup. Swapping in a publishable key **without** changing the guard
+> silently removes the URL/key consistency check — the build keeps passing and nobody is told.
+> Treat the guard edit as part of the migration, in the same change, or the migration quietly
+> weakens the one control that would have caught D-012.
+
+**What the build guard needs — and a correction to the obvious assumption.** The guard extracts
+the project ref from the anon key's JWT payload. A publishable key is **not a JWT and carries no
+ref claim**, so that cross-check cannot survive the migration. But it would **not break the
+build**: `scripts/check-env.mjs` only attempts the parse when the key splits into three parts,
+otherwise it warns and continues. **It degrades silently, which is worse than failing** — the
+URL check would still run, but the "URL and key belong to the same project" check would quietly
+stop existing. When migrating, either drop that check deliberately (documented), or pin an
+expected key prefix instead. The URL check is the load-bearing half — it is what would have
+caught D-012.
+
+**Security difference that matters here:** the practical gain is revocability. Legacy keys are
+derived from the project's JWT secret, so rotating one means rotating the secret and invalidating
+everything; publishable/secret keys can be revoked and replaced individually. For this project —
+no auth, one service-role consumer — that is a maintenance improvement, not a vulnerability fix.
+Nothing about the current setup is insecure because of legacy keys.
+
+### NOT A BUG — the position number is deliberately invisible below 10,000
+
+`getMilestoneText` (`app/components/Hero/index.jsx`) buckets the position rather than showing
+it: any position ≤ 100 renders "you're part of the first **100**", ≤ 500 → "first 500", and so
+on. A bare "you're registrant #N" only appears **above 10,000**. The same bucketing is
+duplicated in the edge function's `positionText`.
+
+**So no real signup will see their actual number for a long time.** That is a copy decision —
+"you're in the first 100" reads better than "you're #3" — not a defect.
+
+**Why this is recorded:** the ordinal work (dropping the gappy sequence, computing `count(*)+1`
+at insert time, migration `20260802100100`) is correct and the number *is* stored honestly —
+verified: the first test signup got position 1. But because it is never displayed at these
+volumes, a future reader could conclude the ordinal is broken and "fix" something that works.
+It isn't broken. It is just not shown yet.
+
+Still applies: the `COALESCE(MAX(...),0)+1` change must land with the D4 deletion path, since
+the stored value is what matters even when unseen.
+
+### DESIGN DECISION — the unsubscribe page has a logo but no navbar
+
+Deliberate, not an oversight. The logo is there because someone arriving from an email must
+see instantly that they are in the right place; an unbranded page of bare text reads as an
+error or a phishing landing, which is precisely the impression that pushes people to the spam
+button instead.
+
+The navbar is deliberately absent: it carries a "Get Early Access" CTA and a language
+switcher. Showing a signup CTA to someone who has just unsubscribed is tone-deaf, and the
+language is already resolved from their stored locale, so the switcher would only invite them
+to change it.
+
 ### WATCH AT LAUNCH — sender domain reputation
 
 `nxtcollect.com` has a poor ratio on almost no volume. As of 2026-08-02, **7 sends total**:

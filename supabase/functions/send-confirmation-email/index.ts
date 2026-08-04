@@ -47,6 +47,41 @@ async function unsubscribeUrl(email: string): Promise<string | null> {
   return `${base}/functions/v1/unsubscribe?e=${encodeURIComponent(e)}&t=${token}`;
 }
 
+// C3 / D-003: rate limiting.
+// Raw IPs never reach the database — only a salted SHA-256. THROTTLE_SALT must be set.
+// Limits are per rolling hour. Deliberately generous: this stops abuse, not real people.
+const THROTTLE_WINDOW = "1 hour";
+const IP_LIMIT = 5;      // signups+resends per IP per hour
+const EMAIL_LIMIT = 3;   // sends to one address per hour
+
+async function hashKey(value: string): Promise<string | null> {
+  const salt = Deno.env.get("THROTTLE_SALT");
+  if (!salt) return null; // fail-open: a missing salt must not break signups outright
+  const data = enc.encode(salt + ":" + value.toLowerCase());
+  const digest = await crypto.subtle.digest("SHA-256", data);
+  return [...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+/** Returns seconds to wait, or 0 when allowed. */
+async function throttle(dimension: "ip" | "email", value: string, limit: number): Promise<number> {
+  const keyHash = await hashKey(value);
+  if (!keyHash) return 0;
+  const { data, error } = await supabase.rpc("check_signup_throttle", {
+    p_dimension: dimension,
+    p_key_hash: keyHash,
+    p_limit: limit,
+    p_window: THROTTLE_WINDOW,
+  });
+  if (error) {
+    // Fail OPEN, deliberately. A throttle outage must not take signups down with it — the
+    // failure mode of blocking everyone is worse than the failure mode of not limiting
+    // briefly. Logged so it is visible.
+    console.error("Throttle check failed (failing open):", error);
+    return 0;
+  }
+  return typeof data === "number" ? data : 0;
+}
+
 // NOTE: duplicated from app/components/Hero/index.jsx (EUROPEAN_COUNTRIES).
 // Change one, change the other — same class of duplication as the milestone
 // thresholds below. Server-side validation is required because dropping the anon
@@ -102,6 +137,27 @@ Deno.serve(async (req: Request) => {
       );
     }
 
+    // C3: throttle before any database write or Resend call. The client IP comes from
+    // x-forwarded-for; the first entry is the original client.
+    const clientIp = (req.headers.get("x-forwarded-for") ?? "").split(",")[0].trim() || "unknown";
+    const retryAfter = Math.max(
+      await throttle("ip", clientIp, IP_LIMIT),
+      await throttle("email", email, EMAIL_LIMIT),
+    );
+    if (retryAfter > 0) {
+      return new Response(
+        JSON.stringify({ error: "Too many requests" }),
+        {
+          status: 429,
+          headers: {
+            ...corsHeaders,
+            "Content-Type": "application/json",
+            "Retry-After": String(retryAfter),
+          },
+        }
+      );
+    }
+
     const resendApiKey = Deno.env.get("RESEND_API_KEY");
     if (!resendApiKey) {
       console.error("RESEND_API_KEY not configured");
@@ -133,15 +189,23 @@ Deno.serve(async (req: Request) => {
       // True ordinal, computed at insert time. The old sequence default produced gaps
       // (a duplicate insert consumed nextval before the unique constraint rejected it),
       // so the number was never the real Nth signup. Migration 20260802100100 dropped it.
-      // ponytail: count-then-insert can collide under simultaneous signups, giving two
-      // people the same number. Harmless on a waitlist and UNIQUE(email) still holds;
-      // take an advisory lock only if that ever matters.
-      const { count, error: countError } = await supabase
+      // ponytail: read-then-insert can collide under simultaneous signups, giving two
+      // people the same number. Harmless on a waitlist — UNIQUE(email) still holds and the
+      // number is not displayed below 10,000; take an advisory lock only if that changes.
+      // MAX+1, not count(*)+1. The deletion route in the privacy notice is live, so rows
+      // WILL be removed — and count(*) shrinks when they are, which would hand a later
+      // signup a number already sent to someone else. MAX only regresses if the highest row
+      // itself is deleted, and below 10,000 the number is never shown to users anyway
+      // (getMilestoneText buckets it), so the residual case is invisible.
+      const { data: maxRow, error: countError } = await supabase
         .from("nextcollect_registration_records")
-        .select("*", { count: "exact", head: true });
+        .select("registration_position")
+        .order("registration_position", { ascending: false })
+        .limit(1)
+        .maybeSingle();
 
       if (countError) {
-        console.error("Count failed:", countError);
+        console.error("Position lookup failed:", countError);
         return new Response(
           JSON.stringify({ error: "Signup temporarily unavailable" }),
           {
@@ -151,7 +215,7 @@ Deno.serve(async (req: Request) => {
         );
       }
 
-      const nextPosition = (count ?? 0) + 1;
+      const nextPosition = (maxRow?.registration_position ?? 0) + 1;
 
       const { data: inserted, error: insertError } = await supabase
         .from("nextcollect_registration_records")
@@ -256,7 +320,7 @@ Deno.serve(async (req: Request) => {
       "https://chat.whatsapp.com/EngLN5KIIB7CitR2xkzaMv",
       "",
       "Thanks for joining us this early,",
-      "Matthijs & Rens",
+      "Team NextCollect",
       "",
       "---",
       "You are receiving this email because you registered at https://www.nxtcollect.com",
@@ -359,22 +423,6 @@ Deno.serve(async (req: Request) => {
                   </td>
                 </tr>
                 <tr>
-                  <td style="padding:10px 0px 8px 0px;">
-                    <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
-                      <tr>
-                        <td valign="middle" width="52" style="padding-right:12px; padding-bottom: 10px;">
-                          <img src="https://www.nxtcollect.com/img/Nextcollect_Welcomes_Email_Profile-Images_v03.png" alt="Team NextCollect" width="125" style="display:block; width:125px; height:auto; outline:none; text-decoration:none;" />
-                        </td>
-                      </tr>
-                      <tr>
-                        <td valign="middle" align="left">
-                          <p style="margin:0; font-family:'inter', Arial, sans-serif; font-size:17px; font-weight:600; line-height:1.4; color:#1C1B29;"> Team NextCollect</p>
-                        </td>
-                      </tr>
-                    </table>
-                  </td>
-                </tr>
-                <tr>
                   <td style="padding:22px 0px 26px 0px;" align="left">
                     <p style="margin:0 0 16px 0; font-family:'inter', Arial, sans-serif; font-size:17px; font-weight:400; line-height:1.7; color:#1C1B29;">
                       Hi there,<br /><br />
@@ -382,7 +430,7 @@ Deno.serve(async (req: Request) => {
                     </p>
                     <p style="margin:0; font-family:'inter', Arial, sans-serif; font-size:17px; font-weight:400; line-height:1.7; color:#1C1B29;">
                       Thanks for joining us this early,<br /><br />
-                      Matthijs & Rens
+                      Team NextCollect
                     </p>
                   </td>
                 </tr>

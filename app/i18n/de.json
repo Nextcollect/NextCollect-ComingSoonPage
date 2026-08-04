@@ -33,7 +33,9 @@
     "error_try_again": "Es gab ein Problem mit diesem Eintrag. Bitte versuche es erneut.",
     "error_unavailable": "Wir konnten den Anmeldedienst nicht erreichen. Bitte versuchen Sie es gleich noch einmal.",
     "error_generic": "Etwas ist schiefgelaufen. Bitte versuche es erneut.",
-    "error_resend": "Erneutes Senden fehlgeschlagen. Bitte versuche es erneut."
+    "error_resend": "Erneutes Senden fehlgeschlagen. Bitte versuche es erneut.",
+    "consent": "Wir speichern E-Mail und Land für eine Bestätigung jetzt und eine Ankündigung zum Start — mehr nicht. Jederzeit abbestellbar.",
+    "privacy_link": "Datenschutz"
   },
   "success": {
     "title": "Sie sind auf der Liste",
@@ -44,5 +46,14 @@
     "resend": "E-Mail erneut senden",
     "milestone_first": "Du gehörst jetzt zu den ersten {threshold}, die die Plattform mitgestalten",
     "milestone_number": "Du bist Registrant #{position}"
+  },
+  "unsubscribe": {
+    "title_ok": "Sie wurden abgemeldet",
+    "body_ok": "Sie erhalten keine weiteren E-Mails von NextCollect. Falls dies ein Versehen war, können Sie sich jederzeit erneut anmelden.",
+    "title_invalid": "Dieser Link ist ungültig",
+    "body_invalid": "Der Abmeldelink ist ungültig oder abgelaufen.",
+    "title_error": "Etwas ist schiefgelaufen",
+    "body_error": "Bitte versuchen Sie es gleich noch einmal oder schreiben Sie an info@nxtcollect.com.",
+    "back": "Zurück zu NextCollect"
   }
 }

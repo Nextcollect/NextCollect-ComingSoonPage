@@ -25,7 +25,7 @@ Everything you need is in files. Read in this order:
 | 4. C6 minimal | ✅ **DONE** (landed inside step 2) |
 | 5. GDPR | 🟡 **PARTIAL** — inventory done; plumbing not started; policy blocked |
 | 6. Sender address + brand capitalisation | ⬜ not started |
-| 7. Next 16 + React 19 | ⬜ not started |
+| 7. Next 16 + React 19 | ✅ **DONE on branch `next16-upgrade`** — builds and renders clean; not merged |
 | 8. Vercel env fix + go-live | ⬜ not started |
 
 ### Verified production state (2026-08-02, read-only MCP + curl)
@@ -131,8 +131,26 @@ those is near-zero here (no middleware, no API routes, no server actions, no dyn
   (`propTypes`, `defaultProps`, `ReactDOM.render`, `findDOMNode`, `forwardRef`, string refs, legacy
   context). Next 15's async `cookies`/`headers`/`params`/`searchParams` is **entirely unused**.
   6 `next/*` imports across 5 files.
-- **Most likely breakage:** `app/components/Section/index.jsx:60` routes an **SVG through
-  `next/image`** with no `images` config and no `dangerouslyAllowSVG`. Check this first.
+- **The flagged SVG risk did NOT materialise.** Verified on Next 16.2.12: SVGs are **not** routed
+  through the optimizer at all — the rendered HTML uses the raw path (`src="/img/….svg"`) and all
+  8 SVG assets return 200. Forcing an SVG through `/_next/image` returns 400, which is Next
+  correctly *refusing* to optimize SVG without `dangerouslyAllowSVG` — the safe default. **No
+  `images` config is needed.**
+
+### npm audit reports 3 highs — assessed, and NOT a blocker
+
+`npm audit` flags `postcss@8.4.31` and `sharp@0.34.5`. Both are **transitive dependencies of Next
+itself** — there is no Next 16.2.x that avoids them, and `postcss@8.4.31` was **already present in
+the Next 14 tree**, so the upgrade does not introduce it.
+
+Neither is exploitable in this app:
+- **postcss** — build-time CSS processing. The advisories need attacker-controlled CSS or CSS
+  comments; all CSS here is authored in-repo. No user-supplied CSS exists.
+- **sharp/libvips** — used by `next/image`. The advisories need attacker-supplied images; all images
+  are static assets in `public/`. There is no upload path.
+
+**Never run `npm audit fix --force` here.** npm's proposed remedy is `next@9.3.3` — a downgrade of
+seven majors that would undo this entire step.
 - `@supabase/supabase-js` is now **unused by the Next app** (the client was deleted in step 2).
   Remove it from `package.json` as part of this bump.
 - **Validate on a preview deploy, not production:** fix the **Preview** env vars first (previews are
@@ -141,7 +159,150 @@ those is near-zero here (no middleware, no API routes, no server actions, no dyn
 
 ---
 
-## Step 8 — go-live (owner runs)
+## GO-LIVE RUNBOOK (2026-08-04) — one ordered list
+
+> `SUPABASE_DB_PASSWORD` is **not** needed for any step here. Nothing below touches the
+> database schema. Export it only if a migration is added later.
+
+### 1. Merge
+```bash
+cd "<repo>"
+git fetch origin                      # local main is stale — origin/main is ahead
+git switch resume-audit
+git merge origin/main                 # the two image-rename commits
+git merge next16-upgrade              # Next 16 + everything since
+git push origin resume-audit
+```
+**Trap:** if either `merge` reports a conflict, **stop** — do not push. Last checked,
+`git merge-tree` showed 0 conflicts, but re-verify rather than assume.
+
+### 2. PR
+Open `resume-audit` → `main`, review the diff, merge.
+**Nothing goes live yet** — Production still has no Supabase env vars, so the build-time guard
+fails the build. That is fail-closed and intended.
+
+### 3. Production env vars — the actual moment of go-live
+Vercel → Settings → Environment Variables → tick **Production**:
+
+| Variable | Value |
+|---|---|
+| `NEXT_PUBLIC_SUPABASE_URL` | `https://nofzyhxjpsikdhbcpfuo.supabase.co` |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | the live project's anon key (Supabase → Settings → API) |
+
+Confirm `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, `RESEND_API_KEY` are **absent** from
+Production.
+
+**Trap:** setting these alone changes nothing — `NEXT_PUBLIC_*` is inlined at compile time.
+The site only goes live at step 4. Equally: once they are set, *any* future build goes live
+against the real database.
+
+### 4. Force a genuinely fresh build
+Merging in step 2 triggers a build. If Production env was set **after** that build, it used the
+old (absent) values and will have failed — **that failure is expected.** Trigger a new one:
+
+- Vercel → Deployments → **⋯ → Redeploy**, and **uncheck "Use existing Build Cache"**, or
+- push any commit to `main`.
+
+**Verify the build log shows:** `✓ Environment check passed — Supabase project "nofzyhxjpsikdhbcpfuo"`.
+If it shows a different ref, the env vars did not save — stop, fix, rebuild.
+
+### 5. End-to-end test — on `https://www.nxtcollect.com` only
+A `*.vercel.app` origin is not in the edge function allowlist and will 403.
+
+- [ ] Home page renders; language switcher works
+- [ ] Consent line visible above the submit button, with a working Privacy link
+- [ ] `/privacy` and `/privacy?lang=de` render correctly
+- [ ] **Sign up with a real address you control** → success modal, milestone copy
+- [ ] Email arrives from **NextCollect &lt;info@nxtcollect.com&gt;**, signed **Team NextCollect**, no profile image
+- [ ] Unsubscribe link → lands on `nxtcollect.com/unsubscribed` in the right language
+- [ ] Resend logs show **delivered**, not bounced
+- [ ] Leak probe still denied:
+      `curl "$URL/rest/v1/nextcollect_registration_records?select=*" -H "apikey: $ANON"` → `42501`
+- [ ] Delete the test row so the first real signup is **#1**
+
+### 6. Watch for the first few minutes
+
+| Watch | Where | Healthy |
+|---|---|---|
+| Signup succeeds | The form itself | Success modal, no console errors |
+| Function errors | Supabase → Edge Functions → Logs | No repeated 500s |
+| Email delivery | Resend → Logs | `delivered`, **not** bounced or complained |
+| The leak | The curl probe above | `42501 permission denied` |
+| Traffic shape | Supabase → Logs (API) | Ordinary volume, no burst |
+
+### 7. What should make you roll back
+
+| Symptom | Severity | Action |
+|---|---|---|
+| **Anon probe returns rows** | **Critical** | Roll back immediately. Should be impossible — policies dropped and grants revoked — but this is the one that cannot wait |
+| Signup 5xx repeatedly | High | Roll back the frontend; check edge logs |
+| Page does not render / hydration errors | High | Roll back; suspect the Next 16 build |
+| Email never arrives | Medium | Do **not** roll back — signups still work. Check Resend logs and domain status |
+| First real sends bounce | Medium | Pause promotion, investigate before volume compounds (reputation is slow to undo) |
+
+**How to roll back:** Vercel → Deployments → previous deployment → **Promote to Production**.
+
+**What rollback does and does not undo — important:** it reverts *only the frontend*. Database
+changes, the edge function, and Supabase secrets all stay. Rolling back restores the bundle
+pointing at the **dead** project, so the site returns to broken-but-not-leaking. That is a safe
+fallback, not a fix — and it does not re-open the read leak, because C2 closed that at the
+database.
+
+---
+
+## Step 8 — original notes
+
+### Three things that will bite you if the order is wrong
+
+1. **The build-time guard fails any Vercel build until that environment's vars are fixed.**
+   `scripts/check-env.mjs` pins `EXPECTED_REF = nofzyhxjpsikdhbcpfuo`. Deploying to Preview before
+   fixing the Preview env produces a *failed build*, not a broken site. Working as designed — but
+   fix env **before** deploying, every time.
+2. **Signup cannot be tested on a Preview URL.** The edge function allowlist is
+   `nxtcollect.com` / `www.nxtcollect.com` only, so a `*.vercel.app` origin gets **403**. Under
+   D-002 the edge function *is* the signup path, so the whole form fails there — not just the
+   email. **Test signup locally instead** (see below); use Preview only to prove it builds and
+   renders on Vercel.
+3. **A plain redeploy may not pick up new env values.** `NEXT_PUBLIC_*` is inlined at *compile*
+   time, so the compile must genuinely re-run.
+
+### Validation order
+
+**A. Test the upgrade locally against the real backend — this is the real end-to-end test.**
+```bash
+supabase secrets set ALLOW_LOCAL_ORIGIN=true      # temporarily allowlists http://localhost:3000
+supabase functions deploy send-confirmation-email # required: the allowlist is evaluated at boot
+git switch next16-upgrade
+npm ci && npm run build && npm start              # real production build, real Supabase, real Resend
+```
+Sign up at `http://localhost:3000` with a **real address you control**. Then:
+```bash
+supabase secrets set ALLOW_LOCAL_ORIGIN=false     # REVERT — do not leave prod accepting localhost
+supabase functions deploy send-confirmation-email
+```
+
+**B. Preview deploy — build verification only, no signup test.**
+Fix **Preview** env vars first, then deploy `next16-upgrade`. Expect the form to 403 on submit;
+that is correct behaviour, not a regression.
+
+**C. Go-live.** Merge → fix **Production** env → fresh build → test on the real domain.
+
+**Deploy `next16-upgrade`, not `resume-audit`** — verified: `next16-upgrade` is a strict superset
+(one extra commit, nothing missing), so it carries all the deployed backend work too.
+
+**Leave Production env vars until step C.** Fixing them early is harmless *only* while no rebuild
+happens — but any push to `main` auto-deploys, which would silently take the new backend live
+before validation.
+
+### Forcing a genuinely fresh build
+
+Either:
+- **Push a commit** — always produces a clean build. Most reliable.
+- Vercel → Deployments → ⋯ → **Redeploy**, and **uncheck "Use existing Build Cache"**.
+
+Do not assume a cached redeploy re-inlines `NEXT_PUBLIC_*`.
+
+---
 
 **Order matters. Do not do this before steps 5a–7 are done.**
 
@@ -198,6 +359,36 @@ invalid country, duplicate 409, resend-to-unregistered.
 `@example.invalid` test signups were accepted and sent, producing hard bounces.
 
 ---
+
+## ⚠ DEPLOY ORDER — migrations BEFORE functions, always
+
+**This bit people. On 2026-08-04 the migration failed (missing `SUPABASE_DB_PASSWORD` in a
+fresh terminal) and the function deploy on the next line succeeded anyway** — leaving a
+deployed function calling a database object that did not exist.
+
+The commands are independent: **a failed `db push` does not stop a subsequent
+`functions deploy`.** Nothing enforces the order but you.
+
+```bash
+export  SUPABASE_DB_PASSWORD='...'   # leading space keeps it out of shell history
+
+supabase db push                     # 1. schema FIRST
+#    ↑ if this fails, STOP. Do not run the deploy. Fix the failure and re-run.
+
+supabase functions deploy <name>     # 2. only after the migration succeeded
+```
+
+Or chain them so the shell enforces it:
+```bash
+supabase db push && supabase functions deploy send-confirmation-email
+```
+
+**Why it was survivable that time, and why not to rely on that:** the throttle helper fails
+*open* — a missing function surfaces as a PostgREST `PGRST202` error object, which
+`supabase-js` returns in `error` rather than throwing, so the `if (error)` branch returned 0
+and signups continued unthrottled. That is designed behaviour for *this* helper. **A different
+call site with no fail-open path would have returned 500 to every user.** Order the commands
+correctly rather than depending on each caller being defensive.
 
 ## Needs the owner's hands
 

@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 import styles from './styles.module.css';
 import { validateEmail } from './validation';
 import SocialMedia from '../SocialMedia';
@@ -306,6 +307,15 @@ export default function Hero() {
                 )}
               </div>
             </div>
+            {/* Consent at the point it actually happens (D-013): submission IS the consent,
+                so the wording must state exactly what will be sent. It authorises the launch
+                announcement and nothing more — anything else needs fresh consent. */}
+            <p className={styles.consent}>
+              {t('form.consent') || "We'll store your email and country to send you a confirmation now and one announcement at launch — nothing else. Unsubscribe any time."}{' '}
+              <Link href={`/privacy?lang=${(locale || 'EN').toLowerCase()}`} className={styles.consentLink}>
+                {t('form.privacy_link') || 'Privacy'}
+              </Link>
+            </p>
             <button
               type="submit"
               className={styles.submitButton}
@@ -367,7 +377,7 @@ export default function Hero() {
                 {isResending ? '…' : (t('success.resend') || 'Resend email')}
               </button>
               {resendError && (
-                <p role="alert" style={{ color: 'red', fontSize: '13px', marginTop: '6px' }}>{resendError}</p>
+                <p role="alert" className={styles.resendError}>{resendError}</p>
               )}
             </div>
             <button type="button" className={styles.successButton} onClick={handleCloseSuccess}>

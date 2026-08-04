@@ -33,7 +33,9 @@
     "error_try_again": "Er was een probleem met dit formulier. Probeer het opnieuw.",
     "error_unavailable": "We konden de aanmeldservice niet bereiken. Probeer het zo meteen opnieuw.",
     "error_generic": "Er is iets misgegaan. Probeer het opnieuw.",
-    "error_resend": "Opnieuw verzenden mislukt. Probeer het opnieuw."
+    "error_resend": "Opnieuw verzenden mislukt. Probeer het opnieuw.",
+    "consent": "We bewaren je e-mailadres en land om je nu een bevestiging te sturen en één aankondiging bij de lancering — meer niet. Afmelden kan altijd.",
+    "privacy_link": "Privacy"
   },
   "success": {
     "title": "Je staat op de lijst",
@@ -44,5 +46,14 @@
     "resend": "E-mail opnieuw verzenden",
     "milestone_first": "Je behoort nu tot de eerste {threshold} die het platform helpen vormgeven",
     "milestone_number": "Je bent registrant #{position}"
+  },
+  "unsubscribe": {
+    "title_ok": "Je bent uitgeschreven",
+    "body_ok": "Je ontvangt geen e-mails meer van NextCollect. Was dit een vergissing? Je kunt je altijd opnieuw aanmelden.",
+    "title_invalid": "Deze link is niet geldig",
+    "body_invalid": "De afmeldlink is ongeldig of verlopen.",
+    "title_error": "Er ging iets mis",
+    "body_error": "Probeer het zo meteen opnieuw, of mail naar info@nxtcollect.com.",
+    "back": "Terug naar NextCollect"
   }
 }
