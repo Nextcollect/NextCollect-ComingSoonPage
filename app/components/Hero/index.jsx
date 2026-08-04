@@ -326,11 +326,11 @@ export default function Hero() {
               broke on desktop. Sitting after </form> takes it out of the flex row at every
               width — the same place the status message already lives. */}
           <p className={styles.consent}>
-              {t('form.consent') || "We'll store your email and country to send you a confirmation now and one announcement at launch — nothing else. Unsubscribe any time."}{' '}
-              <Link href={`/privacy?lang=${(locale || 'EN').toLowerCase()}`} className={styles.consentLink}>
-                {t('form.privacy_link') || 'Privacy'}
-              </Link>
-            </p>
+            {t('form.consent') || "We'll store your email and country to send you a confirmation now and one announcement at launch — nothing else. Unsubscribe any time."}{' '}
+            <Link href={`/privacy?lang=${(locale || 'EN').toLowerCase()}`} className={styles.consentLink}>
+              {t('form.privacy_link') || 'Privacy'}
+            </Link>
+          </p>
       {message && (
         <div className={`${styles.message} ${styles[messageType]}`} role="status" aria-live="polite">
           {message}

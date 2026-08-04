@@ -101,6 +101,7 @@ holding older differently-worded translations. **Effort XS** — delete.
 | 3.18 | **Throttle failures are invisible.** `throttle()` fails open and only `console.error`s to Supabase edge logs. Nobody is alerted, and edge-log retention is short | Rate limiting could be silently off and you would not know. Same *shape* as C6, smaller *consequence*: signups keep working, only the protection is gone. **Realistic detection is the Resend log check already scheduled at launch** — an abnormal send volume is the visible symptom | S if ever worth a real alert |
 | 3.16 | Confirm the WhatsApp invite link is permanent | It is in **every** email; if it expires, every email ever sent has a dead CTA | XS |
 | 3.17 | DPAs with Supabase / Vercel / Resend | Moot under the reduced GDPR scope; matters if this becomes real | XS |
+| 3.19 | **Git identity is unset globally.** Commits are attributed to `rensterra@MacBook-Pro-van-Rens-old.local`, a machine name that no longer applies | Cosmetic, but every commit in this repo carries a wrong author address, and GitHub will not link them to the account. Fix: `git config --global user.name "..."` and `git config --global user.email "..."`. Existing commits keep the old address unless history is rewritten — not worth doing | XS |
 
 ---
 

@@ -65,7 +65,14 @@ wrong or over-built from the code alone, and the reasoning is not recoverable fr
 19. **Never mark NextCollect's own transactional email as spam** (and never advise the owner to).
     1 of the 4 emails ever sent is already a spam complaint; on a domain with no positive sending
     history that is a real deliverability threat. Delete test messages instead. See D-011.
-20. **Do not infer production state from this repository — they have diverged.** The deployed edge
+20. **Check `git branch --show-current` before every commit**, especially after a go-live
+    merge, when branches diverge and the working branch is no longer the one you were on.
+    On 2026-08-04 a UI fix was committed to `resume-audit` while the user had already moved
+    to `main`; the fix was then absent from the branch they merged and shipped, and the bug
+    appeared unfixed in production. **Same discipline as the migration-before-deploy rule
+    below: verify the target, do not assume it.** Also check `git branch -r --contains <sha>`
+    before telling anyone a fix is deployable.
+21. **Do not infer production state from this repository — they have diverged.** The deployed edge
     function, the live INSERT policy and the migration ledger all differ from the files. Verify with
     the read-only Supabase MCP before assuming any fix is live. See D-010.
 
