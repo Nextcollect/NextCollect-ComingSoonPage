@@ -269,6 +269,36 @@ invalid country, duplicate 409, resend-to-unregistered.
 
 ---
 
+## ⚠ DEPLOY ORDER — migrations BEFORE functions, always
+
+**This bit people. On 2026-08-04 the migration failed (missing `SUPABASE_DB_PASSWORD` in a
+fresh terminal) and the function deploy on the next line succeeded anyway** — leaving a
+deployed function calling a database object that did not exist.
+
+The commands are independent: **a failed `db push` does not stop a subsequent
+`functions deploy`.** Nothing enforces the order but you.
+
+```bash
+export  SUPABASE_DB_PASSWORD='...'   # leading space keeps it out of shell history
+
+supabase db push                     # 1. schema FIRST
+#    ↑ if this fails, STOP. Do not run the deploy. Fix the failure and re-run.
+
+supabase functions deploy <name>     # 2. only after the migration succeeded
+```
+
+Or chain them so the shell enforces it:
+```bash
+supabase db push && supabase functions deploy send-confirmation-email
+```
+
+**Why it was survivable that time, and why not to rely on that:** the throttle helper fails
+*open* — a missing function surfaces as a PostgREST `PGRST202` error object, which
+`supabase-js` returns in `error` rather than throwing, so the `if (error)` branch returned 0
+and signups continued unthrottled. That is designed behaviour for *this* helper. **A different
+call site with no fail-open path would have returned 500 to every user.** Order the commands
+correctly rather than depending on each caller being defensive.
+
 ## Needs the owner's hands
 
 MCP connectors are read-only by design (CLAUDE.md 14–17). The owner runs:

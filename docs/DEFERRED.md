@@ -98,6 +98,7 @@ holding older differently-worded translations. **Effort XS** — delete.
 | 3.13 | Legacy Supabase API key migration (`sb_publishable_`/`sb_secret_`) | Legacy keys **deleted end of 2026** — hard deadline. Must update `check-env.mjs` in the same change or the consistency check vanishes silently | M |
 | 3.14 | DMARC is `p=none` | Anyone can spoof the domain; tightening while deliverability is shaky is riskier than waiting | S |
 | 3.15 | Rotate Resend key + Supabase DB password again | Both entered shell history in plaintext. Local only, not disclosure | XS |
+| 3.18 | **Throttle failures are invisible.** `throttle()` fails open and only `console.error`s to Supabase edge logs. Nobody is alerted, and edge-log retention is short | Rate limiting could be silently off and you would not know. Same *shape* as C6, smaller *consequence*: signups keep working, only the protection is gone. **Realistic detection is the Resend log check already scheduled at launch** — an abnormal send volume is the visible symptom | S if ever worth a real alert |
 | 3.16 | Confirm the WhatsApp invite link is permanent | It is in **every** email; if it expires, every email ever sent has a dead CTA | XS |
 | 3.17 | DPAs with Supabase / Vercel / Resend | Moot under the reduced GDPR scope; matters if this becomes real | XS |
 
