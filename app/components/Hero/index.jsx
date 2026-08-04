@@ -1,44 +1,55 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import Image from 'next/image';
+import Link from 'next/link';
 import styles from './styles.module.css';
-import { supabase } from './supabase';
 import { validateEmail } from './validation';
 import SocialMedia from '../SocialMedia';
 import { useLanguage } from '../../context/LanguageProvider';
 
-const EUROPEAN_COUNTRIES = [
+const EUROPEAN_COUNTRIES = Object.freeze([
   'Austria', 'Belgium', 'Bulgaria', 'Croatia', 'Cyprus', 'Czech Republic',
   'Denmark', 'Estonia', 'Finland', 'France', 'Germany', 'Greece',
   'Hungary', 'Ireland', 'Italy', 'Latvia', 'Lithuania', 'Luxembourg',
   'Malta', 'Netherlands', 'Poland', 'Portugal', 'Romania', 'Slovakia',
   'Slovenia', 'Spain', 'Sweden', 'United Kingdom', 'Switzerland', 'Norway'
-].sort();
+].sort());
 
-const getMilestoneText = (position) => {
+// NOTE: milestone thresholds are duplicated in supabase/functions/send-confirmation-email/index.ts
+const getMilestoneText = (position, t) => {
   const milestones = [100, 500, 1000, 2000, 3000, 5000, 10000];
   for (const threshold of milestones) {
     if (position <= threshold) {
-      return `You’re now part of the first ${threshold} helping shape the platform`;
+      return (t('success.milestone_first') || "You're now part of the first {threshold} helping shape the platform")
+        .replace('{threshold}', threshold);
     }
   }
-  return `You're registrant #${position}`;
+  return (t('success.milestone_number') || "You're registrant #{position}")
+    .replace('{position}', position);
 };
 
 export default function Hero() {
-  const { t } = useLanguage();
+  const { t, locale } = useLanguage();
   const [email, setEmail] = useState('');
   const [country, setCountry] = useState('');
   const [message, setMessage] = useState('');
   const [messageType, setMessageType] = useState('');
   const [isCountryOpen, setIsCountryOpen] = useState(false);
   const countryDropdownRef = useRef(null);
+  const modalRef = useRef(null);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isResending, setIsResending] = useState(false);
   const [emailSent, setEmailSent] = useState(false);
   const [resendEmail, setResendEmail] = useState('');
+  const [resendError, setResendError] = useState('');
   const [registrationPosition, setRegistrationPosition] = useState(null);
 
-  const sendConfirmationEmail = async ({ emailAddress, position }) => {
+  // D-002: the edge function is the only path that writes the table. The anon key has no
+  // database access at all, so there is no client-side insert any more — signup and resend
+  // are both a single call to this function.
+  const callSignupFunction = async (payload) => {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
@@ -55,12 +66,24 @@ export default function Hero() {
         'apikey': anonKey,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        email: emailAddress,
-        registrationPosition: position,
-      }),
+      body: JSON.stringify(payload),
     });
   };
+
+  const handleCloseSuccess = () => {
+    setShowSuccess(false);
+    setEmailSent(false);
+    setIsResending(false);
+    setResendEmail('');
+    setResendError('');
+    setRegistrationPosition(null);
+  };
+
+  // Lock body scroll while modal is open
+  useEffect(() => {
+    document.body.style.overflow = showSuccess ? 'hidden' : '';
+    return () => { document.body.style.overflow = ''; };
+  }, [showSuccess]);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -76,99 +99,128 @@ export default function Hero() {
 
   useEffect(() => {
     if (!showSuccess) return undefined;
-    const handleEsc = (event) => {
+
+    const modal = modalRef.current;
+    if (modal) {
+      const focusable = modal.querySelectorAll(
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+      );
+      if (focusable.length > 0) focusable[0].focus();
+    }
+
+    const handleKeyDown = (event) => {
       if (event.key === 'Escape') {
-        setShowSuccess(false);
+        handleCloseSuccess();
+        return;
+      }
+      if (event.key !== 'Tab' || !modal) return;
+      const focusable = modal.querySelectorAll(
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+      );
+      if (focusable.length === 0) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (event.shiftKey) {
+        if (document.activeElement === first) {
+          event.preventDefault();
+          last.focus();
+        }
+      } else {
+        if (document.activeElement === last) {
+          event.preventDefault();
+          first.focus();
+        }
       }
     };
-    document.addEventListener('keydown', handleEsc);
-    return () => document.removeEventListener('keydown', handleEsc);
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
   }, [showSuccess]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (isSubmitting) return;
     setMessage('');
     setMessageType('');
 
-    if (!supabase) {
-      setMessage('Signups are unavailable right now. Please set the Supabase keys.');
-      setMessageType('error');
-      return;
-    }
-
     if (!email.trim() || !country.trim()) {
-      setMessage('Please fill in all fields');
+      setMessage(t('form.error_fields_required') || 'Please fill in all fields');
       setMessageType('error');
       return;
     }
 
     if (!validateEmail(email)) {
-      setMessage('Please enter a valid email address');
+      setMessage(t('form.error_email_invalid') || 'Please enter a valid email address');
       setMessageType('error');
       return;
     }
 
+    setIsSubmitting(true);
     try {
-      const { data, error } = await supabase
-        .from('nextcollect_registration_records')
-        .insert([{ email: email.trim(), country }])
-        .select('registration_position')
-        .maybeSingle();
+      const response = await callSignupFunction({
+        action: 'signup',
+        email: email.trim(),
+        country,
+        // Stored so the unsubscribe page can be shown in the language they signed up in.
+        locale: (locale || 'EN').toLowerCase(),
+      });
 
-      if (error) {
-        if (error.code === '23505') {
-          setMessage('This email is already registered');
-          setMessageType('error');
-        } else {
-          setMessage('There was an issue with this entry. Please try again.');
-          setMessageType('error');
-        }
-      } else {
-        setRegistrationPosition(data?.registration_position);
-        setResendEmail(email.trim());
-        setShowSuccess(true);
-        setMessage('');
-        setMessageType('');
-        setEmail('');
-        setCountry('');
-
-        try {
-          const response = await sendConfirmationEmail({
-            emailAddress: email.trim(),
-            position: data?.registration_position,
-          });
-
-          if (response.ok) {
-            setEmailSent(true);
-          } else {
-            console.error('Email send failed:', await response.json());
-            setEmailSent(false);
-          }
-        } catch (emailErr) {
-          console.error('Error sending email:', emailErr);
-          setEmailSent(false);
-        }
+      if (response.status === 409) {
+        setMessage(t('form.error_email_exists') || 'This email is already registered');
+        setMessageType('error');
+        return;
       }
+
+      if (!response.ok) {
+        // C6: a server-side failure is NOT the same as bad input. Say so, so an outage
+        // reads as an outage rather than as the user's mistake.
+        setMessage(t('form.error_unavailable') || "We couldn't reach the signup service. Please try again in a moment.");
+        setMessageType('error');
+        return;
+      }
+
+      const result = await response.json();
+
+      setRegistrationPosition(result.position ?? null);
+      setResendEmail(email.trim());
+      setEmailSent(result.emailSent === true);
+      setShowSuccess(true);
+      setMessage('');
+      setMessageType('');
+      setEmail('');
+      setCountry('');
     } catch (err) {
-      setMessage('Something went wrong. Please try again.');
+      // C6: fetch only throws on network/DNS/CORS failure — never on an HTTP error status.
+      // This branch means the service was unreachable, which is exactly the failure that
+      // went undetected for five months (D-012). It must not read as "your input was wrong".
+      console.error('Signup request failed to reach the service:', err);
+      setMessage(t('form.error_unavailable') || "We couldn't reach the signup service. Please try again in a moment.");
       setMessageType('error');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   const handleResendEmail = async () => {
+    if (isResending) return;
+    setResendError('');
+    setIsResending(true);
     try {
-      const response = await sendConfirmationEmail({
-        emailAddress: resendEmail,
-        position: registrationPosition,
+      // Resend never sends a position — the server looks it up. D-001.
+      const response = await callSignupFunction({
+        action: 'resend',
+        email: resendEmail,
       });
 
       if (response.ok) {
         setEmailSent(true);
       } else {
-        console.error('Resend failed:', await response.json());
+        setResendError(t('form.error_resend') || 'Failed to resend. Please try again.');
       }
     } catch (err) {
-      console.error('Error resending email:', err);
+      setResendError(t('form.error_resend') || 'Failed to resend. Please try again.');
+    } finally {
+      setIsResending(false);
     }
   };
 
@@ -196,6 +248,7 @@ export default function Hero() {
                 className={styles.emailInput}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                disabled={isSubmitting}
               />
             </div>
             <div className={`${styles.formControl} ${styles.formControlCountry}`}>
@@ -210,6 +263,7 @@ export default function Hero() {
                   onClick={() => setIsCountryOpen((prev) => !prev)}
                   aria-haspopup="listbox"
                   aria-expanded={isCountryOpen}
+                  disabled={isSubmitting}
                 >
                   <span>{country || t('form.select_country') || 'Select country'}</span>
                   <span className={styles.countryCaret} aria-hidden="true">
@@ -253,44 +307,80 @@ export default function Hero() {
                 )}
               </div>
             </div>
-            <button type="submit" className={styles.submitButton}>
-              {t('form.submit') || 'Get Early Access'}
+            {/* Consent at the point it actually happens (D-013): submission IS the consent,
+                so the wording must state exactly what will be sent. It authorises the launch
+                announcement and nothing more — anything else needs fresh consent. */}
+            <p className={styles.consent}>
+              {t('form.consent') || "We'll store your email and country to send you a confirmation now and one announcement at launch — nothing else. Unsubscribe any time."}{' '}
+              <Link href={`/privacy?lang=${(locale || 'EN').toLowerCase()}`} className={styles.consentLink}>
+                {t('form.privacy_link') || 'Privacy'}
+              </Link>
+            </p>
+            <button
+              type="submit"
+              className={styles.submitButton}
+              disabled={isSubmitting}
+              aria-disabled={isSubmitting}
+            >
+              {isSubmitting
+                ? (t('form.submitting') || 'Sending…')
+                : (t('form.submit') || 'Get Early Access')}
             </button>
           </form>
       {message && (
-        <div className={`${styles.message} ${styles[messageType]}`}>
+        <div className={`${styles.message} ${styles[messageType]}`} role="status" aria-live="polite">
           {message}
         </div>
       )}
 
       {showSuccess && (
         <div className={styles.successOverlay} role="dialog" aria-modal="true" aria-labelledby="success-title">
-          <div className={styles.successCard}>
+          <div className={styles.successCard} ref={modalRef}>
             <h2 id="success-title" className={styles.successTitle}>{t('success.title') || "You're in the list"}</h2>
             <p className={styles.successSubtitle}>
-              {t('success.subtitle') || 'Thanks for joining our early group. You’ll be one of the founding members and get access before anyone else.'}
+              {t('success.subtitle') || 'Thanks for joining our early group. You\'ll be one of the founding members and get access before anyone else.'}
             </p>
             {registrationPosition && (
               <p className={styles.successMilestone}>
-                {getMilestoneText(registrationPosition)}
+                {getMilestoneText(registrationPosition, t)}
               </p>
             )}
+            {/* Decorative success check. Was a dotlottie player pulling a runtime from
+                unpkg.com and an asset from lottie.host — two third-party requests that
+                disclosed every visitor's IP for an aria-hidden decoration. Inline SVG +
+                CSS stroke animation needs no network, no dependency, and cannot fail
+                silently. Honours prefers-reduced-motion. */}
             <div className={styles.successCheck} aria-hidden="true">
-              <dotlottie-wc
-                class={styles.successLottie}
-                src="https://lottie.host/56c326e0-28f2-4909-b3d6-05d01ba82897/DwmTJJcvkN.lottie"
-                autoplay
-              ></dotlottie-wc>
+              <svg
+                className={styles.successCheckMark}
+                viewBox="0 0 52 52"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+                focusable="false"
+              >
+                <circle className={styles.successCheckCircle} cx="26" cy="26" r="24" />
+                <path className={styles.successCheckPath} d="M14 27l8 8 16-16" />
+              </svg>
             </div>
-            {emailSent && (
-              <div className={styles.emailNotification}>
-                <p>{t('success.check_email') || "Check your email for updates. Don't see it? Check your spam folder."}</p>
-                <button type="button" className={styles.resendLink} onClick={handleResendEmail}>
-                  {t('success.resend') || 'Resend email'}
-                </button>
-              </div>
-            )}
-            <button type="button" className={styles.successButton} onClick={() => setShowSuccess(false)}>
+            <div className={styles.emailNotification}>
+              <p>
+                {emailSent
+                  ? (t('success.check_email') || "Check your email for updates. Don't see it? Check your spam folder.")
+                  : (t('success.no_email') || "Didn't receive a confirmation email?")}
+              </p>
+              <button
+                type="button"
+                className={styles.resendLink}
+                onClick={handleResendEmail}
+                disabled={isResending}
+              >
+                {isResending ? '…' : (t('success.resend') || 'Resend email')}
+              </button>
+              {resendError && (
+                <p role="alert" className={styles.resendError}>{resendError}</p>
+              )}
+            </div>
+            <button type="button" className={styles.successButton} onClick={handleCloseSuccess}>
               {t('success.continue') || 'Continue'}
             </button>
             <a href="mailto:info@nxtcollect.com" className={styles.successEmail}>info@nxtcollect.com</a>
@@ -299,7 +389,14 @@ export default function Hero() {
       )}
         </div>
         <div className={styles.heroImage}>
-          <img src="/img/Test_header_Image.png" alt="Collectibles" />
+          <Image
+            src="/img/Test_header_Image.png"
+            alt="Collectibles"
+            width={720}
+            height={600}
+            style={{ width: '100%', height: 'auto' }}
+            priority
+          />
         </div>
       </div>
     </section>

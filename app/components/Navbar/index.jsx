@@ -30,7 +30,7 @@ export default function Navbar() {
       return SUPPORTED_LANGS.includes(langCode) ? langCode : 'EN';
     })();
     setLocale(browserLang);
-  }, []);
+  }, [setLocale]);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -50,6 +50,7 @@ export default function Navbar() {
   };
 
   const handleScrollToHero = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
     const emailInput = document.getElementById('early-access-email');
     if (emailInput) {
       setTimeout(() => {
@@ -68,7 +69,7 @@ export default function Navbar() {
         <div className={styles.logo}>
           <Image src="/img/nextcollect_Logo_full-color.svg" alt="NextCollect Logo" width={150} height={32} priority />
         </div>
-        <SocialMedia />
+        <div className={styles.navbarSocial}><SocialMedia /></div>
       </div>
       <div className={styles.rightSection}>
         <div className={styles.languageDropdown} ref={dropdownRef}>
@@ -80,7 +81,7 @@ export default function Navbar() {
             aria-expanded={isOpen}
           >
             <Image src="/img/frame-1.svg" alt="Language" width={16} height={16} />
-            <span>{LANGUAGE_LABELS[selectedLang]}</span>
+            <span className={styles.languageLabelText}>{LANGUAGE_LABELS[selectedLang]}</span>
           </button>
           {isOpen && (
             <div className={styles.languageMenu} role="listbox">
@@ -99,7 +100,7 @@ export default function Navbar() {
             </div>
           )}
         </div>
-        <button className={styles.ctaButton} onClick={handleScrollToHero}>
+        <button type="button" className={styles.ctaButton} onClick={handleScrollToHero}>
           {t('cta.join') || 'Join The Waitlist'}
         </button>
       </div>

@@ -25,13 +25,35 @@
     "email_placeholder": "Geben Sie Ihre E-Mail-Adresse ein",
     "country_label": "Land",
     "select_country": "Land auswählen",
-    "submit": "Frühen Zugriff erhalten"
+    "submit": "Frühen Zugriff erhalten",
+    "submitting": "Wird gesendet…",
+    "error_fields_required": "Bitte alle Felder ausfüllen",
+    "error_email_invalid": "Bitte gib eine gültige E-Mail-Adresse ein",
+    "error_email_exists": "Diese E-Mail-Adresse ist bereits registriert",
+    "error_try_again": "Es gab ein Problem mit diesem Eintrag. Bitte versuche es erneut.",
+    "error_unavailable": "Wir konnten den Anmeldedienst nicht erreichen. Bitte versuchen Sie es gleich noch einmal.",
+    "error_generic": "Etwas ist schiefgelaufen. Bitte versuche es erneut.",
+    "error_resend": "Erneutes Senden fehlgeschlagen. Bitte versuche es erneut.",
+    "consent": "Wir speichern E-Mail und Land für eine Bestätigung jetzt und eine Ankündigung zum Start — mehr nicht. Jederzeit abbestellbar.",
+    "privacy_link": "Datenschutz"
   },
   "success": {
     "title": "Sie sind auf der Liste",
     "subtitle": "Danke, dass Sie sich unserer frühen Gruppe angeschlossen haben. Sie werden eines der Gründungsmitglieder sein und vor allen anderen Zugriff erhalten.",
     "continue": "Weiter",
     "check_email": "Überprüfen Sie Ihre E-Mails auf Updates. Sehen Sie es nicht? Überprüfen Sie Ihren Spam-Ordner.",
-    "resend": "E-Mail erneut senden"
+    "no_email": "Keine Bestätigungs-E-Mail erhalten?",
+    "resend": "E-Mail erneut senden",
+    "milestone_first": "Du gehörst jetzt zu den ersten {threshold}, die die Plattform mitgestalten",
+    "milestone_number": "Du bist Registrant #{position}"
+  },
+  "unsubscribe": {
+    "title_ok": "Sie wurden abgemeldet",
+    "body_ok": "Sie erhalten keine weiteren E-Mails von NextCollect. Falls dies ein Versehen war, können Sie sich jederzeit erneut anmelden.",
+    "title_invalid": "Dieser Link ist ungültig",
+    "body_invalid": "Der Abmeldelink ist ungültig oder abgelaufen.",
+    "title_error": "Etwas ist schiefgelaufen",
+    "body_error": "Bitte versuchen Sie es gleich noch einmal oder schreiben Sie an info@nxtcollect.com.",
+    "back": "Zurück zu NextCollect"
   }
 }

@@ -25,13 +25,35 @@
     "email_placeholder": "Introduce tu dirección de correo",
     "country_label": "País",
     "select_country": "Seleccionar país",
-    "submit": "Obtener acceso anticipado"
+    "submit": "Obtener acceso anticipado",
+    "submitting": "Enviando…",
+    "error_fields_required": "Por favor, rellena todos los campos",
+    "error_email_invalid": "Por favor, introduce una dirección de correo válida",
+    "error_email_exists": "Este correo ya está registrado",
+    "error_try_again": "Hubo un problema. Por favor, inténtalo de nuevo.",
+    "error_unavailable": "No pudimos conectar con el servicio de registro. Vuelve a intentarlo en un momento.",
+    "error_generic": "Algo salió mal. Por favor, inténtalo de nuevo.",
+    "error_resend": "Error al reenviar. Por favor, inténtalo de nuevo.",
+    "consent": "Guardamos tu correo y país para enviarte una confirmación ahora y un aviso en el lanzamiento — nada más. Puedes darte de baja cuando quieras.",
+    "privacy_link": "Privacidad"
   },
   "success": {
     "title": "Estás en la lista",
     "subtitle": "Gracias por unirte a nuestro grupo temprano. Serás uno de los miembros fundadores y tendrás acceso antes que los demás.",
     "continue": "Continuar",
     "check_email": "Revisa tu correo para actualizaciones. ¿No lo ves? Revisa la carpeta de spam.",
-    "resend": "Reenviar correo"
+    "no_email": "¿No recibiste el correo de confirmación?",
+    "resend": "Reenviar correo",
+    "milestone_first": "Ahora eres parte de los primeros {threshold} en dar forma a la plataforma",
+    "milestone_number": "Eres el registrado #{position}"
+  },
+  "unsubscribe": {
+    "title_ok": "Te has dado de baja",
+    "body_ok": "No recibirás más correos de NextCollect. Si ha sido un error, puedes volver a registrarte cuando quieras.",
+    "title_invalid": "Este enlace no es válido",
+    "body_invalid": "El enlace para darse de baja no es válido o ha caducado.",
+    "title_error": "Algo ha salido mal",
+    "body_error": "Vuelve a intentarlo en un momento o escribe a info@nxtcollect.com.",
+    "back": "Volver a NextCollect"
   }
 }

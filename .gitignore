@@ -25,3 +25,12 @@ pnpm-debug.log*
 .vscode/*
 !.vscode/settings.json
 !.vscode/extensions.json
+
+# Supabase CLI local scratch state
+supabase/.temp/
+
+# Claude Code local settings
+.claude/settings.local.json
+.vercel
+.env*
+!.env.example

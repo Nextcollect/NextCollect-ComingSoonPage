@@ -1,9 +1,12 @@
 .hero {
   --navbar-height: 96px;
-  padding: 0 65px;
+  --hero-gutter: 80px; /* reserved height for footer/scroll area */
+  --hero-padding-x: 65px;
+  --hero-card-padding-x: 95px;
+  padding: 0 var(--hero-padding-x);
   display: flex;
   align-items: center;
-  min-height: calc(100vh - 80px - var(--navbar-height));
+  min-height: calc(100vh - var(--hero-gutter) - var(--navbar-height));
 }
 
 .heroCard {
@@ -13,8 +16,8 @@
   display: flex;
   align-items: center;
   gap: var(--space-6);
-  padding: var(--space-6) 95px;
-  min-height: calc(100vh - 80px - var(--navbar-height));
+  padding: var(--space-6) var(--hero-card-padding-x);
+  min-height: calc(100vh - var(--hero-gutter) - var(--navbar-height));
 }
 
 .heroContent {
@@ -32,7 +35,7 @@
 }
 
 .heroTitle {
-  font-size: 64px;
+  font-size: clamp(32px, 5vw, 64px);
   font-weight: 800;
   color: var(--white);
   line-height: 1.1;
@@ -40,7 +43,7 @@
 }
 
 .heroDescription {
-  font-size: 20px;
+  font-size: clamp(18px, 2vw, 20px);
   font-weight: 400;
   color: var(--white);
   line-height: 1.6;
@@ -97,7 +100,9 @@
 }
 
 .emailInput::placeholder {
-  color: #d9d9d9;
+  /* Was #9e9e9e — approx 2.3:1 on --white, below the 4.5:1 minimum and genuinely hard to
+     read. #6b6b6b clears 4.5:1 while still reading as placeholder rather than entered text. */
+  color: #6b6b6b;
 }
 
 .countrySelect {
@@ -196,6 +201,13 @@
 .submitButton:hover {
   background-color: rgba(242, 240, 235, 0.1);
 }
+
+/* A11y, not polish (D-006): inputs had a visible focus ring and the primary action did not,
+   so keyboard users could not see where they were on the button that matters most. */
+.submitButton:focus-visible {
+  outline: 2px solid var(--white);
+  outline-offset: 3px;
+}
 .message {
   padding: var(--space-2) 0;
   border-radius: 0;
@@ -251,7 +263,7 @@
 }
 
 .successTitle {
-  font-size: 38px;
+  font-size: clamp(24px, 5vw, 38px);
   font-weight: 800;
   color: var(--black);
   margin: 0 0 var(--space-3) 0;
@@ -274,14 +286,6 @@
   margin: var(--space-4) 0 var(--space-5);
 }
 
-.successBody {
-  font-size: 15px;
-  font-weight: 400;
-  color: #3f3f3f;
-  margin: 0 0 var(--space-4) 0;
-  letter-spacing: 0.15px;
-  max-width: 520px;
-}
 
 .successButton {
   display: block;
@@ -357,17 +361,49 @@
   text-decoration: underline;
 }
 
-.successLottie {
-  width: 260px;
-  height: 260px;
-  opacity: 0.85;
+/* Success check — replaces the third-party dotlottie player. No network, no dependency. */
+.successCheckMark {
+  width: 120px;
+  height: 120px;
+  opacity: 0.9;
 }
 
-.successDivider {
-  height: 1px;
-  background: rgba(28, 27, 41, 0.08);
-  margin: var(--space-5) 0 var(--space-4);
+.successCheckCircle,
+.successCheckPath {
+  stroke: var(--color-primary);
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  fill: none;
 }
+
+.successCheckCircle {
+  stroke-dasharray: 151; /* ≈ 2πr for r=24 */
+  stroke-dashoffset: 151;
+  animation: successCheckDraw 0.5s ease-out forwards;
+}
+
+.successCheckPath {
+  stroke-dasharray: 40;
+  stroke-dashoffset: 40;
+  animation: successCheckDraw 0.35s ease-out 0.4s forwards;
+}
+
+@keyframes successCheckDraw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+/* A confirmation must still read as confirmed when motion is suppressed. */
+@media (prefers-reduced-motion: reduce) {
+  .successCheckCircle,
+  .successCheckPath {
+    animation: none;
+    stroke-dashoffset: 0;
+  }
+}
+
 
 @media (max-width: 1200px) {
   .hero {
@@ -384,17 +420,26 @@
   }
 }
 
+@media (max-width: 1024px) {
+  .heroContent {
+    flex: 1 1 100%;
+  }
+
+  .heroImage {
+    display: none;
+  }
+}
+
 @media (max-width: 768px) {
   .hero {
-    --navbar-height: 120px;
     padding: 0 var(--space-6);
-    min-height: calc(100vh - 80px - var(--navbar-height));
+    min-height: unset;
   }
 
   .heroCard {
     flex-direction: column;
-    padding: var(--space-8);
-    min-height: calc(100vh - 80px - var(--navbar-height));
+    padding: var(--space-12) var(--space-8);
+    min-height: unset;
   }
 
   .heroContent {
@@ -436,4 +481,33 @@
   .successCard {
     padding: var(--space-10) var(--space-8) var(--space-8);
   }
+}
+
+/* Consent notice above the submit button. Deliberately small and unobtrusive —
+   it must be readable without dominating the form. The four longest locales were
+   tightened so this stays two lines rather than a wall of text. */
+.consent {
+  margin: 0 0 var(--space-3);
+  max-width: 480px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--white);
+  opacity: 0.85;
+}
+
+.consentLink {
+  color: var(--white);
+  text-decoration: underline;
+}
+
+.consentLink:focus-visible {
+  outline: 2px solid var(--white);
+  outline-offset: 2px;
+}
+
+/* Was an inline color:'red' at approx 3.4:1 on the white modal — below 4.5:1. */
+.resendError {
+  color: #c62828;
+  font-size: 13px;
+  margin-top: 6px;
 }

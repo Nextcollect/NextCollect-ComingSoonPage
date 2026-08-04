@@ -25,13 +25,35 @@
     "email_placeholder": "Entrez votre adresse e-mail",
     "country_label": "Pays",
     "select_country": "Sélectionnez un pays",
-    "submit": "Obtenir un accès anticipé"
+    "submit": "Obtenir un accès anticipé",
+    "submitting": "Envoi en cours…",
+    "error_fields_required": "Veuillez remplir tous les champs",
+    "error_email_invalid": "Veuillez entrer une adresse e-mail valide",
+    "error_email_exists": "Cet e-mail est déjà enregistré",
+    "error_try_again": "Une erreur s'est produite. Veuillez réessayer.",
+    "error_unavailable": "Nous n'avons pas pu joindre le service d'inscription. Veuillez réessayer dans un instant.",
+    "error_generic": "Quelque chose s'est mal passé. Veuillez réessayer.",
+    "error_resend": "Échec du renvoi. Veuillez réessayer.",
+    "consent": "Nous conservons votre e-mail et pays pour une confirmation maintenant et une annonce au lancement — rien d'autre. Désinscription à tout moment.",
+    "privacy_link": "Confidentialité"
   },
   "success": {
     "title": "Vous êtes sur la liste",
     "subtitle": "Merci d'avoir rejoint notre groupe d'early access. Vous serez l'un des membres fondateurs et aurez accès avant les autres.",
     "continue": "Continuer",
     "check_email": "Vérifiez votre e-mail pour les mises à jour. Vous ne le voyez pas ? Vérifiez votre dossier spam.",
-    "resend": "Renvoyer l'e-mail"
+    "no_email": "Vous n'avez pas reçu d'e-mail de confirmation ?",
+    "resend": "Renvoyer l'e-mail",
+    "milestone_first": "Vous faites maintenant partie des {threshold} premiers à façonner la plateforme",
+    "milestone_number": "Vous êtes le registrant #{position}"
+  },
+  "unsubscribe": {
+    "title_ok": "Vous êtes désinscrit",
+    "body_ok": "Vous ne recevrez plus d’e-mails de NextCollect. S’il s’agit d’une erreur, vous pouvez vous réinscrire à tout moment.",
+    "title_invalid": "Ce lien n’est pas valide",
+    "body_invalid": "Le lien de désinscription est invalide ou a expiré.",
+    "title_error": "Une erreur est survenue",
+    "body_error": "Veuillez réessayer dans un instant, ou écrivez à info@nxtcollect.com.",
+    "back": "Retour à NextCollect"
   }
 }
