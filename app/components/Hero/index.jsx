@@ -307,15 +307,6 @@ export default function Hero() {
                 )}
               </div>
             </div>
-            {/* Consent at the point it actually happens (D-013): submission IS the consent,
-                so the wording must state exactly what will be sent. It authorises the launch
-                announcement and nothing more — anything else needs fresh consent. */}
-            <p className={styles.consent}>
-              {t('form.consent') || "We'll store your email and country to send you a confirmation now and one announcement at launch — nothing else. Unsubscribe any time."}{' '}
-              <Link href={`/privacy?lang=${(locale || 'EN').toLowerCase()}`} className={styles.consentLink}>
-                {t('form.privacy_link') || 'Privacy'}
-              </Link>
-            </p>
             <button
               type="submit"
               className={styles.submitButton}
@@ -327,6 +318,19 @@ export default function Hero() {
                 : (t('form.submit') || 'Get Early Access')}
             </button>
           </form>
+
+          {/* OUTSIDE the <form> on purpose. .emailForm is `flex-direction: row` above
+              768px, so a <p> placed among the inputs becomes a flex item and gets squeezed
+              into a ~12-character column between the country select and the button. Below
+              768px the form switches to `column` and it looked fine, which is why this only
+              broke on desktop. Sitting after </form> takes it out of the flex row at every
+              width — the same place the status message already lives. */}
+          <p className={styles.consent}>
+              {t('form.consent') || "We'll store your email and country to send you a confirmation now and one announcement at launch — nothing else. Unsubscribe any time."}{' '}
+              <Link href={`/privacy?lang=${(locale || 'EN').toLowerCase()}`} className={styles.consentLink}>
+                {t('form.privacy_link') || 'Privacy'}
+              </Link>
+            </p>
       {message && (
         <div className={`${styles.message} ${styles[messageType]}`} role="status" aria-live="polite">
           {message}
