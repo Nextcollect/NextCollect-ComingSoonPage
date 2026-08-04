@@ -9,7 +9,19 @@ Effort key: **XS** <30 min · **S** ~1–2 h · **M** ~half a day · **L** ~a da
 
 ## Tier 1 — I think you are wrong to skip these
 
-### 1.1 Confirm `info@nxtcollect.com` is monitored — **BLOCKING**
+### ~~1.1 Confirm `info@nxtcollect.com` is monitored~~ — ✅ CLOSED 2026-08-04
+Owner confirms it is their own mailbox, owned and read. **The deletion route in the privacy
+notice is real.** Consequence: hard deletes will now actually happen, which is what forced the
+ordinal fix below out of "deferred" and into this change set.
+
+### ~~1.2 C3 rate limiting~~ — ✅ DONE 2026-08-04
+### ~~1.3 G4 contrast~~ · ~~1.4 G1 focus-visible~~ — ✅ DONE 2026-08-04
+Placeholder 2.35:1 → **4.68:1**; resend error 3.51:1 → **4.94:1**; submit button now has a
+visible focus ring. Ratios computed, not eyeballed.
+
+### Original entries, retained for reasoning
+
+#### 1.1 Confirm `info@nxtcollect.com` is monitored — **BLOCKING**
 *Risk if left: the privacy notice contains a false statement.* It is now the **only** deletion
 route and the only contact. If nobody reads it, the notice promises a right the user cannot
 exercise, and that is the one thing in this whole scope reduction that would be a straight lie
@@ -129,7 +141,7 @@ holding older differently-worded translations. **Effort XS** — delete.
 |---|---|---|
 | 1 | Is `info@nxtcollect.com` monitored? | **The privacy notice's accuracy.** See 1.1 |
 | 2 | Is the WhatsApp invite link permanent? | Every email's CTA |
-| 3 | Ordinal reuse after deletion — `COALESCE(MAX(...),0)+1` | Must land **with** any hard-delete/erasure flow, not before |
+| ~~3~~ | ~~Ordinal reuse after deletion~~ — ✅ **DONE 2026-08-04**. Confirming the mailbox made the deletion route live, so this stopped being deferrable. Now `MAX+1` | — |
 | 4 | Retention enforcement | Now moot — the notice says "until we've sent the launch announcement", with no dated promise to keep |
 
 ---

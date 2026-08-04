@@ -377,7 +377,7 @@ export default function Hero() {
                 {isResending ? '…' : (t('success.resend') || 'Resend email')}
               </button>
               {resendError && (
-                <p role="alert" style={{ color: 'red', fontSize: '13px', marginTop: '6px' }}>{resendError}</p>
+                <p role="alert" className={styles.resendError}>{resendError}</p>
               )}
             </div>
             <button type="button" className={styles.successButton} onClick={handleCloseSuccess}>

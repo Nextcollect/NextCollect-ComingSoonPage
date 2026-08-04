@@ -100,7 +100,9 @@
 }
 
 .emailInput::placeholder {
-  color: #9e9e9e;
+  /* Was #9e9e9e — approx 2.3:1 on --white, below the 4.5:1 minimum and genuinely hard to
+     read. #6b6b6b clears 4.5:1 while still reading as placeholder rather than entered text. */
+  color: #6b6b6b;
 }
 
 .countrySelect {
@@ -198,6 +200,13 @@
 
 .submitButton:hover {
   background-color: rgba(242, 240, 235, 0.1);
+}
+
+/* A11y, not polish (D-006): inputs had a visible focus ring and the primary action did not,
+   so keyboard users could not see where they were on the button that matters most. */
+.submitButton:focus-visible {
+  outline: 2px solid var(--white);
+  outline-offset: 3px;
 }
 .message {
   padding: var(--space-2) 0;
@@ -494,4 +503,11 @@
 .consentLink:focus-visible {
   outline: 2px solid var(--white);
   outline-offset: 2px;
+}
+
+/* Was an inline color:'red' at approx 3.4:1 on the white modal — below 4.5:1. */
+.resendError {
+  color: #c62828;
+  font-size: 13px;
+  margin-top: 6px;
 }
