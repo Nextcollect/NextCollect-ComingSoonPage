@@ -159,7 +159,98 @@ seven majors that would undo this entire step.
 
 ---
 
-## Step 8 — go-live (owner runs)
+## GO-LIVE RUNBOOK (2026-08-04) — one ordered list
+
+> `SUPABASE_DB_PASSWORD` is **not** needed for any step here. Nothing below touches the
+> database schema. Export it only if a migration is added later.
+
+### 1. Merge
+```bash
+cd "<repo>"
+git fetch origin                      # local main is stale — origin/main is ahead
+git switch resume-audit
+git merge origin/main                 # the two image-rename commits
+git merge next16-upgrade              # Next 16 + everything since
+git push origin resume-audit
+```
+**Trap:** if either `merge` reports a conflict, **stop** — do not push. Last checked,
+`git merge-tree` showed 0 conflicts, but re-verify rather than assume.
+
+### 2. PR
+Open `resume-audit` → `main`, review the diff, merge.
+**Nothing goes live yet** — Production still has no Supabase env vars, so the build-time guard
+fails the build. That is fail-closed and intended.
+
+### 3. Production env vars — the actual moment of go-live
+Vercel → Settings → Environment Variables → tick **Production**:
+
+| Variable | Value |
+|---|---|
+| `NEXT_PUBLIC_SUPABASE_URL` | `https://nofzyhxjpsikdhbcpfuo.supabase.co` |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | the live project's anon key (Supabase → Settings → API) |
+
+Confirm `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, `RESEND_API_KEY` are **absent** from
+Production.
+
+**Trap:** setting these alone changes nothing — `NEXT_PUBLIC_*` is inlined at compile time.
+The site only goes live at step 4. Equally: once they are set, *any* future build goes live
+against the real database.
+
+### 4. Force a genuinely fresh build
+Merging in step 2 triggers a build. If Production env was set **after** that build, it used the
+old (absent) values and will have failed — **that failure is expected.** Trigger a new one:
+
+- Vercel → Deployments → **⋯ → Redeploy**, and **uncheck "Use existing Build Cache"**, or
+- push any commit to `main`.
+
+**Verify the build log shows:** `✓ Environment check passed — Supabase project "nofzyhxjpsikdhbcpfuo"`.
+If it shows a different ref, the env vars did not save — stop, fix, rebuild.
+
+### 5. End-to-end test — on `https://www.nxtcollect.com` only
+A `*.vercel.app` origin is not in the edge function allowlist and will 403.
+
+- [ ] Home page renders; language switcher works
+- [ ] Consent line visible above the submit button, with a working Privacy link
+- [ ] `/privacy` and `/privacy?lang=de` render correctly
+- [ ] **Sign up with a real address you control** → success modal, milestone copy
+- [ ] Email arrives from **NextCollect &lt;info@nxtcollect.com&gt;**, signed **Team NextCollect**, no profile image
+- [ ] Unsubscribe link → lands on `nxtcollect.com/unsubscribed` in the right language
+- [ ] Resend logs show **delivered**, not bounced
+- [ ] Leak probe still denied:
+      `curl "$URL/rest/v1/nextcollect_registration_records?select=*" -H "apikey: $ANON"` → `42501`
+- [ ] Delete the test row so the first real signup is **#1**
+
+### 6. Watch for the first few minutes
+
+| Watch | Where | Healthy |
+|---|---|---|
+| Signup succeeds | The form itself | Success modal, no console errors |
+| Function errors | Supabase → Edge Functions → Logs | No repeated 500s |
+| Email delivery | Resend → Logs | `delivered`, **not** bounced or complained |
+| The leak | The curl probe above | `42501 permission denied` |
+| Traffic shape | Supabase → Logs (API) | Ordinary volume, no burst |
+
+### 7. What should make you roll back
+
+| Symptom | Severity | Action |
+|---|---|---|
+| **Anon probe returns rows** | **Critical** | Roll back immediately. Should be impossible — policies dropped and grants revoked — but this is the one that cannot wait |
+| Signup 5xx repeatedly | High | Roll back the frontend; check edge logs |
+| Page does not render / hydration errors | High | Roll back; suspect the Next 16 build |
+| Email never arrives | Medium | Do **not** roll back — signups still work. Check Resend logs and domain status |
+| First real sends bounce | Medium | Pause promotion, investigate before volume compounds (reputation is slow to undo) |
+
+**How to roll back:** Vercel → Deployments → previous deployment → **Promote to Production**.
+
+**What rollback does and does not undo — important:** it reverts *only the frontend*. Database
+changes, the edge function, and Supabase secrets all stay. Rolling back restores the bundle
+pointing at the **dead** project, so the site returns to broken-but-not-leaking. That is a safe
+fallback, not a fix — and it does not re-open the read leak, because C2 closed that at the
+database.
+
+---
+
+## Step 8 — original notes
 
 ### Three things that will bite you if the order is wrong
 
